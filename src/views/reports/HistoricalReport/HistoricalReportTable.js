@@ -2,33 +2,28 @@ import { useEffect, useState } from "react"
 import { useHistory } from "react-router-dom"
 import {
   Card,
-  CardHeader,
-  CardTitle,
   CardBody,
   FormGroup,
   Row,
   Col,
-  Input,
-  Form,
   Button,
-  Label,
   CustomInput
 } from 'reactstrap'
 import { ChevronDown } from 'react-feather'
 import DataTable from 'react-data-table-component'
-import { Modal, Spin } from 'antd'
-import { data, basicColumns } from '../../tables/data-tables/data'
+import { Spin, Checkbox } from 'antd'
+import { data } from '../../tables/data-tables/data'
 import * as XLSX from "xlsx"
 import { popupConfirm } from "@src/views/components/sweetalert"
 import { notifySuccess, notifyFailed } from "@src/views/components/toasts/notifyTopCenter"
 import "../report-styling.scss"
-import { useRowSelect } from '@table-library/react-table-library/select'
 
 const HistoricalReportTable = () => {
   const history = useHistory()
   const [loading, setLoading] = useState(false)
   const [reportData, setReportData] = useState()
   const [headerData, setHeaderData] = useState()
+  const [selectCheck, setSelectCheck] = useState([])
 
   useEffect(() => {
     try {
@@ -62,13 +57,28 @@ const HistoricalReportTable = () => {
   }
 
   const onExportReport = () => {
+    const result = reportData.map(item => {
+      const matchingKeys = Object.keys(item).filter(key => {
+        return selectCheck.some(arrItem => arrItem.id === key && arrItem.check);
+      });
+
+      matchingKeys.unshift('datetime')
+      const keyValues = {}
+
+      matchingKeys.forEach(key => {
+        keyValues[key] = item[key]
+      })
+
+      return keyValues
+    })
+
     popupConfirm('Do you want to export this report?', async (type) => {
       if (type === "confirm") {
         try {
           setLoading(true)
           const date = new Date()
           const getDate = formatDate(date)
-          const worksheet = XLSX.utils.json_to_sheet(data)
+          const worksheet = XLSX.utils.json_to_sheet(result)
           const workbook = XLSX.utils.book_new()
           XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1')
 
@@ -84,15 +94,113 @@ const HistoricalReportTable = () => {
     }, 'warning')
   }
 
-  const [selectedColumns, setSelectedColumns] = useState(basicColumns.map((col) => col.selector))
-  const handleColumnToggle = (columnId) => {
-    if (selectedColumns.includes(columnId)) {
-      setSelectedColumns(selectedColumns.filter((col) => col !== columnId));
-    } else {
-      setSelectedColumns([...selectedColumns, columnId]);
+  const customStyles = {
+    rows: {
+      style: {
+        minHeight: '72px', // override the row height
+      }
+    },
+    headCells: {
+      style: {
+        paddingLeft: '8px', // override the cell padding for head cells
+        paddingRight: '8px',
+        display: "flex",
+        justifyContent: "center"
+      }
+    },
+    cells: {
+      style: {
+        paddingLeft: '8px', // override the cell padding for data cells
+        paddingRight: '8px',
+        display: "flex",
+        justifyContent: "center"
+      }
     }
   }
-  const filteredColumns = basicColumns.filter((col) => selectedColumns.includes(col.selector))
+
+  const onCheckExport = (check, value) => {
+    const arr = [{ id: value, check }]
+
+    const indexToRemove = selectCheck.findIndex(item => item.id === value)
+
+    if (indexToRemove !== -1) {
+      selectCheck.splice(indexToRemove, 1) //at position of indexToRemove, remove 1 item
+    }
+    setSelectCheck(current => [...current, ...arr])
+  }
+
+  const columns = [
+    {
+      name:
+        <div style={{fontSize: "14px"}}>
+            Datetime
+        </div>
+      ,
+      selector: "datetime",
+      sortable: true,
+      maxWidth: '500px'
+    },
+    {
+      name:
+        <>
+          <Checkbox
+            checked={selectCheck.find(item => item.id === "c1")?.check}
+            onChange={(e) => onCheckExport(e.target.checked, "c1")}
+          >
+            NSA4000-SAT-BUF
+          </Checkbox>
+        </>
+      ,
+      selector: "c1",
+      sortable: true,
+      maxWidth: '500px'
+    },
+    {
+      name:
+        <>
+          <Checkbox
+            checked={selectCheck.find(item => item.id === "c2")?.check}
+            onChange={(e) => onCheckExport(e.target.checked, "c2")}
+          >
+            NA4000-XT810591
+          </Checkbox>
+        </>
+      ,
+      selector: "c2",
+      sortable: true,
+      maxWidth: '500px'
+    },
+    {
+      name:
+        <>
+          <Checkbox
+            checked={selectCheck.find(item => item.id === "c3")?.check}
+            onChange={(e) => onCheckExport(e.target.checked, "c3")}
+          >
+            SA4450-HG S-702
+          </Checkbox>
+        </>
+      ,
+      selector: "c3",
+      sortable: true,
+      maxWidth: '500px'
+    },
+    {
+      name:
+        <>
+          <Checkbox
+            checked={selectCheck.find(item => item.id === "c4")?.check}
+            onChange={(e) => onCheckExport(e.target.checked, "c4")}
+          >
+            NSA4300-GHV-001
+          </Checkbox>
+        </>
+      ,
+      selector: "c4",
+      sortable: true,
+      maxWidth: '500px'
+    }
+  ]
 
   return (
     <Card>
@@ -118,49 +226,27 @@ const HistoricalReportTable = () => {
           </FormGroup>
         </Col>
       </Row>
-      {/* <Row> */}
-        {/* <Col sm={12}> */}
-          {/* <TableAdvSearch/> */}
+      <Row>
+        <Col sm={12}>
+          {/* <TableAdvSearch /> */}
           <Spin spinning={loading}>
-            {/* <DataTable
+            <DataTable
               noHeader
-              pagination
-              selectableRows
-              // selectableRowsHighlight
-              // selectableRowsNoSelectAll
-              selectableRowsHeader
+              // pagination
+              customStyles={customStyles}
+              fixedHeader={true}
+              fixedHeaderScrollHeight="800px"
               data={reportData}
-              columns={basicColumns}
+              columns={columns}
               className='react-dataTable'
               sortIcon={<ChevronDown size={10} />}
-              paginationRowsPerPageOptions={[10, 25, 50, 100]}
-            /> */}
-
-            <table style={{width: "100%"}}>
-              <thead>
-                <tr>
-                  <div className="table">
-                    {basicColumns.map((column) => (
-                      <div key={column.selector} className="column-table">
-                        <input type="checkbox" class="column-selector" data-column="0" />
-                        <th>
-                          {column.name}
-                        </th>
-                      </div>
-                    ))}
-                  </div>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-
-                </tr>
-              </tbody>
-            </table>
-
+            // paginationRowsPerPageOptions={[10, 25, 50, 100]}
+            // selectableRows // Enable row selection
+            // onSelectedRowsChange={({ selectedRows }) => setSelectedRows(selectedRows.map(row => row.selector))}
+            />
           </Spin>
-        {/* </Col> */}
-      {/* </Row> */}
+        </Col>
+      </Row>
       <CardBody>
       </CardBody>
     </Card>

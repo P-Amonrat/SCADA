@@ -45,12 +45,8 @@
 
 .column-table {
   display: flex;
-  // align-items: center;
+  align-items: center;
   justify-content: center;
-  flex-direction: row;
   // padding: 10px;
 
-  th {
-    text-align: center;
-  }
 }
