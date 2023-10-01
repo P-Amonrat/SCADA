@@ -7,7 +7,7 @@ const ModalForm = (props) => {
   return (
     <>
       <div style={{width: "300px"}}>
-        <Modal isOpen={openModal} className='modal-dialog-centered' backdrop='static' size="lg" style={{maxWidth: '700px', width: '100%'}}>
+        <Modal isOpen={openModal} className='modal-dialog-centered' backdrop='static' size="lg" style={{width: '100%'}}>
           {title && <ModalHeader >{title}</ModalHeader>}
           <ModalBody className={className}>
             {props.children}

@@ -312,7 +312,7 @@ const ProfileManual = (props) => {
       <Row style={{ margin: "20px 10px", flot: "right" }}>
         <Col xs="8" sm="10" lg="10"></Col>
         <Col xs="2" sm="2" lg="2">
-          <Button outline color='primary' onClick={() => setIsOpenModal(false)}>
+          <Button outline color='primary' onClick={() => { setIsOpenModal(false); setAddedProfile([]) }}>
             Discard
           </Button>
         </Col>

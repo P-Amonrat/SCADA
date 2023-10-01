@@ -161,7 +161,7 @@ const VerticalForm = () => {
                     <Button
                       className='mt-1'
                       color='primary'
-                      onClick={() => { setIsOpenModal(true); setAddedProfile([]) }}
+                      onClick={() => setIsOpenModal(true)}
                       disabled={reqData.profileName.value !== 0}
                     >
                       Manual

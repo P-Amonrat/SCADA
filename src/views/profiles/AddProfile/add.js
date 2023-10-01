@@ -1,6 +1,6 @@
 import { notifyFailed, notifySuccess } from "@src/views/components/toasts/notifyTopCenter"
 import { selectThemeColors } from '@utils'
-import { Modal, Spin, Table } from "antd"
+import { Spin, Table } from "antd"
 import { useEffect, useMemo, useState } from "react"
 import DataTable from "react-data-table-component"
 import { ChevronDown } from 'react-feather'
@@ -20,6 +20,7 @@ import {
 } from 'reactstrap'
 import ProfileService from "../Service"
 import FilterComponent from "./FilterComponent"
+import ModalForm from "../../components/modal/modal-form"
 
 const AddProfile = () => {
   const [gmdrType, setGmdrType] = useState(1)
@@ -333,12 +334,10 @@ const AddProfile = () => {
         ) : null}
       </Spin>
 
-
-      <Modal
-        open={isOpenModal}
-        footer={null}
-        onCancel={() => setIsOpenModal(false)}
-        width={500}
+      <ModalForm
+        openModal={isOpenModal}
+        setOpenModal={setIsOpenModal}
+        title=""
       >
         <Card>
           <CardBody>
@@ -358,6 +357,14 @@ const AddProfile = () => {
             <Row style={{ justifyContent: "end", alignItems: 'center', marginTop: "10px" }}>
               <Col style={{ textAlign: "right" }}>
                 <Button
+                  outline
+                  color='primary'
+                  style={{marginRight: "10px"}}
+                  onClick={() => setIsOpenModal(false)}
+                >
+                  Discard
+                </Button>
+                <Button
                   color='primary'
                   onClick={onSaveProfile}
                   disabled={!profileName}
@@ -368,7 +375,7 @@ const AddProfile = () => {
             </Row>
           </CardBody>
         </Card>
-      </Modal>
+      </ModalForm>
     </>
   )
 }
