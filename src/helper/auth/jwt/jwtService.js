@@ -1,6 +1,6 @@
 import axios from 'axios'
 import jwtDefaultConfig from './jwtDefaultConfig'
-import useJwt from '@src/auth/jwt/useJwt'
+// import { useHistory } from 'react-router-dom'
 
 export default class JwtService {
   // ** jwtConfig <= Will be used by this service
@@ -13,6 +13,7 @@ export default class JwtService {
   subscribers = []
 
   constructor(jwtOverrideConfig) {
+    // const history = useHistory()
     this.jwtConfig = { ...this.jwtConfig, ...jwtOverrideConfig }
 
     // ** Request Interceptor
@@ -34,13 +35,18 @@ export default class JwtService {
 
     // ** Add request/response interceptor
     axios.interceptors.response.use(
-      response => response,
+      response => {
+        // console.log("response ==> ", response) 
+        return response
+      },
       error => {
         // ** const { config, response: { status } } = error
         const { config, response } = error
         const originalRequest = config
+
         // ** if (status === 401) {
         if (response && response.status === 401) {
+          console.log('test error 401')
           if (!this.isAlreadyFetchingAccessToken) {
             this.isAlreadyFetchingAccessToken = true
             this.refreshToken().then(r => {
@@ -62,12 +68,15 @@ export default class JwtService {
               resolve(this.axios(originalRequest))
             })
           })
-          const config = useJwt.jwtConfig
-          window.location.href = '/misc/not-authorized'
-          localStorage.removeItem('userData')
-          localStorage.removeItem(config.storageTokenKeyName)
-          localStorage.removeItem(config.storageRefreshTokenKeyName)
+          // window.location.replace = '/misc/not-authorized'
+          window.location.href = 'misc/not-authorized'
           return retryOriginalRequest
+        }
+        if (response === undefined) {
+          // network error
+          // window.location.replace = '/misc/error-page'
+          // window.location.href = '/misc/not-authorized'
+          // window.location.href = 'misc/error-page'
         }
         return Promise.reject(error)
       }
@@ -111,4 +120,6 @@ export default class JwtService {
       refreshToken: this.getRefreshToken()
     })
   }
+
+  
 }

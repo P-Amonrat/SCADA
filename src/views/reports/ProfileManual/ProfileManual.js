@@ -1,61 +1,61 @@
-import { Modal, Table } from "antd"
-import { useState, useMemo, useEffect } from "react"
+import { notifyFailed } from "@src/views/components/toasts/notifyTopCenter"
+import { selectThemeColors } from '@utils'
+import { Spin, Table, Modal } from "antd"
+import { useEffect, useMemo, useState } from "react"
+import DataTable from "react-data-table-component"
+import { ChevronDown } from 'react-feather'
+import Select from 'react-select'
 import {
+  Button,
   Card,
   CardBody,
-  FormGroup,
-  Row,
   Col,
-  Button,
+  CustomInput,
+  FormGroup,
+  Input,
   Label,
-  CustomInput
+  Row
 } from 'reactstrap'
-import { selectThemeColors } from '@utils'
-import Select from 'react-select'
-import DataTable from "react-data-table-component"
-import { dataTableSearch, rtuOptions, tagOptions } from "../constants/data"
-import { ChevronDown } from 'react-feather'
+import ProfileService from "../../profiles/Service"
 import FilterComponent from "./FilterComponent"
+import ModalForm from "../../components/modal/modal-form"
 
 const ProfileManual = (props) => {
 
-  const { isOpenModal, setIsOpenModal, addedProfile, setAddedProfile, profileListData, setProfileListData } = props
-  console.log(profileListData)
+  const { isOpenModal, setIsOpenModal, addedProfile, setAddedProfile } = props
 
   const [gmdrType, setGmdrType] = useState(1)
   const [selectRtuName, setSelectRtuName] = useState()
   const [selectTagName, setSelectTagName] = useState()
   const [addDataTable, setAddDataTable] = useState()
-
+  const [loading, setLoading] = useState(false)
   const [filterText, setFilterText] = useState("")
   const [resetPaginationToggle, setResetPaginationToggle] = useState(false)
+  const [rtuOptions, setRtuOptions] = useState([])
+
+  const fetchData = async () => {
+    try {
+      const getRtuResponse = await ProfileService.getRtuDropdown()
+      const getRtuObj = getRtuResponse?.data.map((item) => {
+        return {
+          value: item.pkey,
+          label: item.libelle
+        }
+      })
+      setRtuOptions(getRtuObj)
+    } catch (err) {
+      console.log(err)
+      notifyFailed('Failed!, Get rtu list failed')
+    }
+  }
 
   useEffect(() => {
-    if (profileListData) {
-      // **Get profile data
-    }
-  }, [profileListData])
+    fetchData()
+  }, [])
 
-  const filteredItems = dataTableSearch.filter(
+  const filteredItems = addDataTable?.filter(
     item => JSON.stringify(item).toLowerCase().indexOf(filterText.toLowerCase()) !== -1
   )
-
-  const subHeaderComponent = useMemo(() => {
-    const handleClear = () => {
-      if (filterText) {
-        setResetPaginationToggle(!resetPaginationToggle)
-        setFilterText("")
-      }
-    }
-
-    return (
-      <FilterComponent
-        onFilter={e => setFilterText(e.target.value)}
-        onClear={handleClear}
-        filterText={filterText}
-      />
-    )
-  }, [filterText, resetPaginationToggle])
 
   const onAddProfileData = (value) => {
     if (!addedProfile.includes(value)) {
@@ -70,19 +70,19 @@ const ProfileManual = (props) => {
   const DataColumn = [
     {
       name: 'RTU name',
-      selector: 'rtuName',
+      selector: 'rtu',
       sortable: true,
       maxWidth: '400px'
     },
     {
       name: 'Tag name',
-      selector: 'tagName',
+      selector: 'tag',
       sortable: true,
       maxWidth: '400px'
     },
     {
       name: 'Description',
-      selector: 'description',
+      selector: 'descr',
       sortable: true,
       maxWidth: '400px'
     },
@@ -97,7 +97,6 @@ const ProfileManual = (props) => {
             Add
           </Button>
         </div>
-
       )
     }
   ]
@@ -105,14 +104,14 @@ const ProfileManual = (props) => {
   const AddedDataColumn = [
     {
       title: 'Tag name',
-      dataIndex: 'tagName',
-      key: 'tagName',
+      dataIndex: 'tag',
+      key: 'tag',
       maxWidth: '400px'
     },
     {
       title: 'Description',
-      dataIndex: 'description',
-      key: 'description',
+      dataIndex: 'descr',
+      key: 'descr',
       maxWidth: '400px'
     },
     {
@@ -130,26 +129,50 @@ const ProfileManual = (props) => {
     }
   ]
 
-  const onSearch = () => {
-    // ** Call api search data
+  const onSearch = async () => {
     try {
-      setAddDataTable(dataTableSearch)
+      setLoading(true)
+      const req = {
+        searchType: gmdrType === 1 ? "rtu" : gmdrType === 2 ? "tag" : "cal",
+        rtu_name: gmdrType === 1 ? selectRtuName.label : gmdrType === 2 ? selectTagName : ""
+      }
+      // ** Call api search data
+      const response = await ProfileService.searchProfileManual(req)
+      setAddDataTable(response.data)
+      setLoading(false)
     } catch (err) {
       console.log(err)
+      notifyFailed("Failed!!, Get profile data Failed")
     }
   }
 
+  const subHeaderComponent = useMemo(() => {
+    const handleClear = () => {
+      if (filterText) {
+        setResetPaginationToggle(!resetPaginationToggle)
+        setFilterText("")
+      }
+    }
+
+    return (
+        <FilterComponent
+          onFilter={e => setFilterText(e.target.value)}
+          onClear={handleClear}
+          filterText={filterText}
+        />
+    )
+  }, [filterText, resetPaginationToggle])
+
   return (
-    <Modal
-      open={isOpenModal}
-      footer={null}
-      onCancel={() => setIsOpenModal(false)}
-      width={1000}
+    <ModalForm
+      openModal={isOpenModal}
+      setOpenModal={setIsOpenModal}
+      title=""
     >
-      <Card>
+      <Card style={{ width: "100%" }}>
         <CardBody>
           <Row style={{ justifyContent: 'center' }}>
-            <Col sm='12'>
+            <Col sm='12' xl="12">
               <FormGroup>
                 <Row>
                   <Col sm='3'>
@@ -162,7 +185,7 @@ const ProfileManual = (props) => {
                         inline
                         label='RTU Name'
                         value={1}
-                        onClick={() => { setGmdrType(1); setAddDataTable(""); setSelectRtuName(); setSelectTagName("") }}
+                        onClick={() => { setGmdrType(1); setSelectRtuName(); setSelectTagName("") }}
                         defaultChecked
                       />
                     </div>
@@ -177,7 +200,7 @@ const ProfileManual = (props) => {
                         inline
                         label='Tag Name'
                         value={2}
-                        onClick={() => { setGmdrType(2); setAddDataTable(""); setSelectRtuName(""); setSelectTagName("") }}
+                        onClick={() => { setGmdrType(2); setSelectRtuName(""); setSelectTagName("") }}
                       />
                     </div>
                   </Col>
@@ -191,7 +214,7 @@ const ProfileManual = (props) => {
                         inline
                         label='Calculation'
                         value={3}
-                        onClick={() => { setGmdrType(3); setAddDataTable(""); setSelectRtuName(""); setSelectTagName() }}
+                        onClick={() => { setGmdrType(3); setSelectRtuName(""); setSelectTagName() }}
                       />
                     </div>
                   </Col>
@@ -210,22 +233,16 @@ const ProfileManual = (props) => {
                         value={selectRtuName}
 
                       />) : gmdrType === 2 ? (
-                          <Select
-                            theme={selectThemeColors}
-                            className='react-select mt-1'
-                            classNamePrefix='select'
-                            placeholder="Tag Name"
-                            options={tagOptions}
-                            isSearchable={true}
-                            isClearable={false}
-                            onChange={(val) => setSelectTagName(val)}
-                            value={gmdrType === 1 ? selectRtuName : gmdrType === 2 ? selectTagName : null}
-
-                          />) : (
-                        <div style={{ marginTop: "17px" }}>
-                          Calculation
-                        </div>
-                      )
+                        <Input
+                          className="mt-1"
+                          value={selectTagName}
+                          onChange={(e) => setSelectTagName(e.target.value)}
+                        />
+                      ) : (
+                      <div style={{ marginTop: "17px" }}>
+                        Calculation
+                      </div>
+                    )
                     }
 
                   </Col>
@@ -238,11 +255,17 @@ const ProfileManual = (props) => {
                         className='mr-1'
                         color='primary'
                         type='submit'
+                        disabled={gmdrType !== 3 && !selectRtuName && !selectTagName}
                         onClick={onSearch}
                       >
                         Search
                       </Button.Ripple>
-                      <Button.Ripple outline color='secondary' type='reset' onClick={() => setIsOpenModal(false)}>
+                      <Button.Ripple
+                        outline
+                        color='primary'
+                        onClick={() => setIsOpenModal(false)}
+                        disabled={addedProfile.length === 0}
+                      >
                         OK
                       </Button.Ripple>
                     </FormGroup>
@@ -254,8 +277,9 @@ const ProfileManual = (props) => {
         </CardBody>
       </Card>
 
-      {addDataTable || (gmdrType !== gmdrType) ? (
-        <>
+      {/* {addDataTable || (gmdrType !== gmdrType) ? ( */}
+      <>
+        <Spin spinning={loading}>
           <Card>
             <CardBody>
               <DataTable
@@ -265,7 +289,7 @@ const ProfileManual = (props) => {
                 defaultSortField="name"
                 striped
                 subHeader
-                subHeaderComponent={subHeaderComponent}
+                subHeaderComponent={addDataTable ? subHeaderComponent : null}
                 columns={DataColumn}
                 className='react-dataTable'
                 sortIcon={<ChevronDown size={10} />}
@@ -273,20 +297,28 @@ const ProfileManual = (props) => {
               />
             </CardBody>
           </Card>
+        </Spin>
 
-          <Card>
-            <CardBody>
-              <Table
-                rowKey={(record) => record.id}
-                columns={AddedDataColumn}
-                dataSource={addedProfile}
-              />
-            </CardBody>
-          </Card>
-        </>
-      ) : null}
-
-    </Modal>
+        <Card>
+          <CardBody>
+            <Table
+              rowKey={(record) => record.id}
+              columns={AddedDataColumn}
+              dataSource={addedProfile}
+            />
+          </CardBody>
+        </Card>
+      </>
+      <Row style={{ margin: "20px 10px", flot: "right" }}>
+        <Col xs="8" sm="10" lg="10"></Col>
+        <Col xs="2" sm="2" lg="2">
+          <Button outline color='primary' onClick={() => setIsOpenModal(false)}>
+            Discard
+          </Button>
+        </Col>
+      </Row>
+      {/* ) : null} */}
+    </ModalForm>
   )
 }
 

@@ -1,48 +1,36 @@
+import '@styles/react/libs/flatpickr/flatpickr.scss'
+import moment from 'moment'
 import { useState } from 'react'
+import Flatpickr from 'react-flatpickr'
 import { useHistory } from "react-router-dom"
 import {
+  Button,
   Card,
+  CardBody,
   CardHeader,
   CardTitle,
-  CardBody,
-  FormGroup,
-  Row,
   Col,
+  CustomInput,
   Form,
-  Button,
+  FormGroup,
   Label,
-  CustomInput
+  Row
 } from 'reactstrap'
-import PickerDateTime from '../../forms/form-elements/datepicker/PickerDateTime'
-import '@styles/react/libs/flatpickr/flatpickr.scss'
-import { Spin } from 'antd'
-import DataTable from 'react-data-table-component'
-import { ChevronDown } from 'react-feather'
-import { viewCheckGMDRReport } from '../constants/tableData'
-import { ViewCheckGMDRColumn } from '../TableColumn'
-import moment from 'moment'
-import { popupConfirm } from "@src/views/components/sweetalert"
-import { notifySuccess, notifyFailed } from "@src/views/components/toasts/notifyTopCenter"
-import * as XLSX from "xlsx"
-import Flatpickr from 'react-flatpickr'
 
 const VerticalForm = () => {
-  const history = useHistory()
   const [type, setType] = useState(1)
   const [dateTime, setDateTime] = useState()
 
   const onSearchReport = () => {
     try {
       const req = {
-        type,
+        type: type === 1 ? "daily_gmdr" : "hourly_gmdr",
         dateTime: moment(dateTime).format("YYYY/MM/DD HH:mm")
       }
-      console.log(req)
 
-      history.push({
-        pathname: "/report/check-report-gmdr/table",
-        state: req
-      })
+      const queryParams = new URLSearchParams(req).toString()
+      const url = `/report/check-report-gmdr/table?${queryParams}`
+      window.open(url, '_blank')
 
     } catch (err) {
       console.log(err)
@@ -97,7 +85,6 @@ const VerticalForm = () => {
                     </Col>
                     <Col xl='4' md='4' sm='4'>
                       <Label className="mb-1" >Datetime</Label>
-                      {/* <PickerDateTime setDate={setDateTime} date={dateTime} /> */}
                       <Flatpickr
                         // value={reqData.dateTime}
                         data-enable-time

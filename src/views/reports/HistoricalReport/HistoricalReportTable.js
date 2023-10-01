@@ -1,49 +1,30 @@
+import { popupConfirm } from "@src/views/components/sweetalert"
+import { notifyFailed, notifySuccess } from "@src/views/components/toasts/notifyTopCenter"
+import { Checkbox, Spin } from 'antd'
+import queryString from 'query-string'
 import { useEffect, useState } from "react"
-import { useHistory } from "react-router-dom"
+import DataTable from 'react-data-table-component'
+import { ChevronDown } from 'react-feather'
+import { useLocation } from "react-router-dom"
 import {
+  Button,
   Card,
   CardBody,
-  FormGroup,
-  Row,
   Col,
-  Button,
-  CustomInput
+  FormGroup,
+  Row
 } from 'reactstrap'
-import { ChevronDown } from 'react-feather'
-import DataTable from 'react-data-table-component'
-import { Spin, Checkbox } from 'antd'
-import { data } from '../../tables/data-tables/data'
 import * as XLSX from "xlsx"
-import { popupConfirm } from "@src/views/components/sweetalert"
-import { notifySuccess, notifyFailed } from "@src/views/components/toasts/notifyTopCenter"
 import "../report-styling.scss"
+import ReportService from '../service'
 
 const HistoricalReportTable = () => {
-  const history = useHistory()
+  const location = useLocation()
   const [loading, setLoading] = useState(false)
   const [reportData, setReportData] = useState()
   const [headerData, setHeaderData] = useState()
   const [selectCheck, setSelectCheck] = useState([])
-
-  useEffect(() => {
-    try {
-      if (history?.location?.state) {
-        console.log("History", history.location.state)
-        setHeaderData(history.location.state)
-        // ** Call api Submit Report
-        // axios.post('/get/report', req)
-        //   .then(res => (
-        //     console.log(res)
-        //      setData(data)
-        setReportData(data)
-        setLoading(false)
-        //   ))
-        // notifySuccess('Success!, Get report successfully')
-      }
-    } catch (err) {
-      console.log(err)
-    }
-  }, [history])
+  const [columnsTable, setColumnTable] = useState()
 
   const formatDate = (date) => {
     const year = date.getFullYear()
@@ -59,8 +40,8 @@ const HistoricalReportTable = () => {
   const onExportReport = () => {
     const result = reportData.map(item => {
       const matchingKeys = Object.keys(item).filter(key => {
-        return selectCheck.some(arrItem => arrItem.id === key && arrItem.check);
-      });
+        return selectCheck.some(arrItem => arrItem.id === key && arrItem.check)
+      })
 
       matchingKeys.unshift('datetime')
       const keyValues = {}
@@ -72,13 +53,24 @@ const HistoricalReportTable = () => {
       return keyValues
     })
 
+    const convertedList = result.map(item => {
+      const newObj = {}
+      for (const key in item) {
+        const matchingDataItem = columnsTable.find(dataItem => dataItem.selector === key)
+        if (matchingDataItem) {
+          newObj[matchingDataItem.name.replace(/<\/?b>/g, '').replace(/<br>/g, ':')] = item[key]
+        }
+      }
+      return newObj
+    })
+
     popupConfirm('Do you want to export this report?', async (type) => {
       if (type === "confirm") {
         try {
           setLoading(true)
           const date = new Date()
           const getDate = formatDate(date)
-          const worksheet = XLSX.utils.json_to_sheet(result)
+          const worksheet = XLSX.utils.json_to_sheet(convertedList)
           const workbook = XLSX.utils.book_new()
           XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1')
 
@@ -94,10 +86,95 @@ const HistoricalReportTable = () => {
     }, 'warning')
   }
 
+  const onCheckExport = (check, value) => {
+    const arr = [{ id: value, check }]
+
+    const indexToRemove = selectCheck.findIndex(item => item.id === value)
+
+    if (indexToRemove !== -1) {
+      selectCheck.splice(indexToRemove, 1) //at position of indexToRemove, remove 1 item
+    }
+    setSelectCheck(current => [...current, ...arr])
+  }
+
+  const columns = columnsTable?.map((item) => {
+    if (item.name !== 'Datetime') {
+      return {
+        name: (
+          <>
+            <Checkbox
+              checked={selectCheck.find(items => items.id === item.selector)?.check}
+              onChange={(e) => onCheckExport(e.target.checked, item.selector)}
+            >
+              {item.name.replace(/<\/?b>/g, '').split('<br>').map((text, index) => (
+                <div key={index} className="column-name">
+                  {text}
+                  {index !== item.name.split('<br>').length - 1 && <br />}
+                </div>
+              ))}
+            </Checkbox>
+          </>
+        ),
+        selector: item.selector,
+        sorttable: item.sorttable,
+        maxWidth: item.maxWidth
+      }
+    } else {
+      return {
+        name: (
+          <>
+            <div style={{ fontSize: "14px" }}>
+              {item.name}
+            </div>
+          </>
+        ),
+        selector: item.selector,
+        sorttable: item.sorttable,
+        maxWidth: item.maxWidth
+      }
+    }
+  })
+
+  useEffect(async () => {
+    try {
+      setLoading(true)
+      const data = queryString.parse(location.search)
+      if (data) {
+        const req = {
+          pf: data.profileName,
+          pf_name: `{${data.tagName}}`,
+          type_m: "1",
+          type_mnemo: data.type, // type type     
+          freq_mnemo: Number(data.achiveType), // archrive type     
+          from_date: data.from,
+          to_date: data.to,
+          compare_box: JSON.parse(data.compareAllType)
+        }
+
+        // ** Call api Submit Report
+        const response = await ReportService.getHistoricalReport(req)
+        if (response?.message === "ok") {
+          setColumnTable(response.data.table.header)
+          setReportData(response.data.table.data)
+          setHeaderData(response.data.title)
+          setLoading(false)
+          notifySuccess('Success!, Get report successfully')
+        }
+
+        if (response.status === 500) {
+          notifyFailed("An error occurred. Please try again.")
+          setLoading(false)
+        }
+      }
+    } catch (err) {
+      console.log(err)
+    }
+  }, [])
+
   const customStyles = {
     rows: {
       style: {
-        minHeight: '72px', // override the row height
+        minHeight: '72px' // override the row height
       }
     },
     headCells: {
@@ -118,100 +195,15 @@ const HistoricalReportTable = () => {
     }
   }
 
-  const onCheckExport = (check, value) => {
-    const arr = [{ id: value, check }]
-
-    const indexToRemove = selectCheck.findIndex(item => item.id === value)
-
-    if (indexToRemove !== -1) {
-      selectCheck.splice(indexToRemove, 1) //at position of indexToRemove, remove 1 item
-    }
-    setSelectCheck(current => [...current, ...arr])
-  }
-
-  const columns = [
-    {
-      name:
-        <div style={{fontSize: "14px"}}>
-            Datetime
-        </div>
-      ,
-      selector: "datetime",
-      sortable: true,
-      maxWidth: '500px'
-    },
-    {
-      name:
-        <>
-          <Checkbox
-            checked={selectCheck.find(item => item.id === "c1")?.check}
-            onChange={(e) => onCheckExport(e.target.checked, "c1")}
-          >
-            NSA4000-SAT-BUF
-          </Checkbox>
-        </>
-      ,
-      selector: "c1",
-      sortable: true,
-      maxWidth: '500px'
-    },
-    {
-      name:
-        <>
-          <Checkbox
-            checked={selectCheck.find(item => item.id === "c2")?.check}
-            onChange={(e) => onCheckExport(e.target.checked, "c2")}
-          >
-            NA4000-XT810591
-          </Checkbox>
-        </>
-      ,
-      selector: "c2",
-      sortable: true,
-      maxWidth: '500px'
-    },
-    {
-      name:
-        <>
-          <Checkbox
-            checked={selectCheck.find(item => item.id === "c3")?.check}
-            onChange={(e) => onCheckExport(e.target.checked, "c3")}
-          >
-            SA4450-HG S-702
-          </Checkbox>
-        </>
-      ,
-      selector: "c3",
-      sortable: true,
-      maxWidth: '500px'
-    },
-    {
-      name:
-        <>
-          <Checkbox
-            checked={selectCheck.find(item => item.id === "c4")?.check}
-            onChange={(e) => onCheckExport(e.target.checked, "c4")}
-          >
-            NSA4300-GHV-001
-          </Checkbox>
-        </>
-      ,
-      selector: "c4",
-      sortable: true,
-      maxWidth: '500px'
-    }
-  ]
-
   return (
     <Card>
       <div className="header-report-table">
-        {/* <Col> */}
-        <p>Profile name: <b>{headerData?.profileName.label}</b></p>
-        <p>Tag name: {headerData?.tagName.map((list) => <b key={list.id}>{list.tagName}, </b>)}</p>
-        <p>Archiving type: <b>{headerData?.achiveType.label}</b></p>
-        <p>Type value: <b>{headerData?.type.label}</b></p>
-        <p>Start date: <b>{headerData?.from}</b></p>
-        <p>Finish date: <b>{headerData?.to}</b></p>
+        <p>Profile name: <b>{headerData?.profile}</b></p>
+        <p>Tag name: <b>{headerData?.tagName}</b></p>
+        <p>Archiving type: <b>{headerData?.archiveType}</b></p>
+        <p>Type value: <b>{headerData?.typeValue}</b></p>
+        <p>Start date: <b>{headerData?.startDate}</b></p>
+        <p>Finish date: <b>{headerData?.endDate}</b></p>
       </div>
       <Row >
         <Col sm={12}>

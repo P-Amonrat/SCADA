@@ -1,35 +1,27 @@
-import { useEffect, useState, useMemo } from "react"
-import { useHistory } from "react-router-dom"
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardBody,
-  FormGroup,
-  Row,
-  Col,
-  Input,
-  Form,
-  Button,
-  Label,
-  CustomInput
-} from 'reactstrap'
+import { popupConfirm } from "@src/views/components/sweetalert"
+import { notifyFailed, notifySuccess } from "@src/views/components/toasts/notifyTopCenter"
 import { Spin } from 'antd'
-import * as XLSX from "xlsx"
+import queryString from 'query-string'
+import { useEffect, useMemo, useState } from "react"
 import DataTable from 'react-data-table-component'
 import { ChevronDown } from 'react-feather'
-import { viewCheckGMDRReport } from '../constants/tableData'
-import { ViewCheckGMDRColumn } from '../TableColumn'
-import { notifySuccess, notifyFailed } from "@src/views/components/toasts/notifyTopCenter"
-import "../report-styling.scss"
+import {
+  Button,
+  Card,
+  CardBody,
+  Col,
+  FormGroup,
+  Row
+} from 'reactstrap'
+import * as XLSX from "xlsx"
 import FilterComponent from "../ProfileManual/FilterComponent"
+import "../report-styling.scss"
+import ReportService from "../service"
 
 const CheckReportTable = () => {
-  const history = useHistory()
   const [loading, setLoading] = useState(false)
   const [reportData, setReportData] = useState()
-  const [headerData, setHeaderData] = useState()
-
+  const [columnsTable, setColumnTable] = useState()
   const [filterText, setFilterText] = useState("")
   const [resetPaginationToggle, setResetPaginationToggle] = useState(false)
 
@@ -54,30 +46,6 @@ const CheckReportTable = () => {
     )
   }, [filterText, resetPaginationToggle])
 
-  useEffect(() => {
-    try {
-      if (history?.location?.state) {
-        console.log("History", history.location.state)
-        setHeaderData(history.location.state)
-        // ** Call api Submit Report
-        // axios.post('/get/report', req)
-        //   .then(res => (
-        //     console.log(res)
-        //      setData(data)
-        setReportData(viewCheckGMDRReport)
-      //**Call api Get report List */
-      // axios.post('/get/viewCheck/report', req)
-      // .then(res => {
-      //   console.log(res)
-      // })
-      setLoading(false)
-      notifySuccess('Success!, Get report successfully')
-      }
-    } catch (err) {
-      console.log(err)
-    }
-  }, [])
-
   const formatDate = (date) => {
     const year = date.getFullYear()
     const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -90,13 +58,24 @@ const CheckReportTable = () => {
   }
 
   const onExportReport = () => {
+
+    reportData.forEach((item) => {
+      Object.keys(item).forEach((key) => {
+        const columnItem = columnsTable.find((col) => col.selector === key)
+        if (columnItem) {
+          item[columnItem.name] = item[key]
+          delete item[key]
+        }
+      })
+    })
+
     popupConfirm('Do you want to export this report?', async (type) => {
       if (type === "confirm") {
         try {
           setLoading(true)
           const date = new Date()
           const getDate = formatDate(date)
-          const worksheet = XLSX.utils.json_to_sheet(data)
+          const worksheet = XLSX.utils.json_to_sheet(reportData)
           const workbook = XLSX.utils.book_new()
           XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1')
 
@@ -111,6 +90,37 @@ const CheckReportTable = () => {
       }
     }, 'warning')
   }
+
+
+  useEffect(async () => {
+    try {
+      setLoading(true)
+      const data = queryString.parse(location.search)
+      if (data) {
+        const req = {
+          type: data.type,
+          from_date: data.dateTime,
+          from_hour: data.dateTime
+        }
+        //**Call api Get report List */
+        const response = await ReportService.getCheckGmdrReport(req)
+        if (response?.message === "ok") {
+          setColumnTable(response.data.table.title)
+          setReportData(response.data.table.data)
+          setLoading(false)
+          notifySuccess('Success!, Get report successfully')
+        }
+
+        if (response.status === 500) {
+          notifyFailed("An error occurred. Please try again.")
+          setLoading(false)
+        }
+      }
+    } catch (err) {
+      console.log(err)
+      notifyFailed("An error occurred. Please try again.")
+    }
+  }, [])
 
   return (
     <Card>
@@ -135,7 +145,7 @@ const CheckReportTable = () => {
               noHeader
               pagination
               data={filteredItems}
-              columns={ViewCheckGMDRColumn}
+              columns={columnsTable}
               defaultSortField="name"
               striped
               subHeader

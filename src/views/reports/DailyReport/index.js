@@ -1,28 +1,24 @@
-import { useState, useEffect } from 'react'
-import { useHistory } from "react-router-dom"
+import { notifyFailed } from "@src/views/components/toasts/notifyTopCenter"
+import '@styles/react/libs/flatpickr/flatpickr.scss'
+import { selectThemeColors } from '@utils'
+import moment from 'moment'
+import { useEffect, useState } from 'react'
+import Flatpickr from 'react-flatpickr'
+import Select from 'react-select'
 import {
+  Button,
   Card,
+  CardBody,
   CardHeader,
   CardTitle,
-  CardBody,
-  FormGroup,
-  Row,
   Col,
-  Input,
+  CustomInput,
   Form,
-  Button,
+  FormGroup,
   Label,
-  CustomInput
+  Row
 } from 'reactstrap'
-import { selectThemeColors } from '@utils'
-import Select from 'react-select'
-import '@styles/react/libs/flatpickr/flatpickr.scss'
-import axios from 'axios'
-import Flatpickr from 'react-flatpickr'
-import moment from 'moment'
-import { popupConfirm } from "@src/views/components/sweetalert"
-import { notifySuccess, notifyFailed } from "@src/views/components/toasts/notifyTopCenter"
-import { RTUChonbutiDropdawn, RTUGSPDropdawn, FlowCompChonDropdown, FlowCompGSPDropdown, TagNameDropdown } from '../constants/Dropdawn'
+import ReportService from '../service'
 
 const rtuRegionOptions = [
   { value: 1, label: 'Chonburi' },
@@ -36,7 +32,6 @@ const initialState = {
 }
 
 const VerticalForm = () => {
-  const history = useHistory()
   const [reqData, setReqData] = useState(initialState)
   const [rtuDropdown, setRtuDropdawn] = useState([])
   const [rtuRegions, setRtuRegions] = useState(rtuRegionOptions[0])
@@ -45,29 +40,38 @@ const VerticalForm = () => {
   const [fromDate, setFromDate] = useState(moment(new Date()).startOf('day').format("YYYY-MM-DD HH:mm"))
   const [toDate, setToDate] = useState(moment(new Date()).endOf('day').format("YYYY-MM-DD HH:mm"))
 
-  const onSelectRTU = (value) => {
+  const onSelectRTU = async (value) => {
     try {
       //** Call api get RTU Region detail (default chonburi) */
-      // axios.get('get/region')
-      //   .then(res => {
-      //     console.log(res)
-      //   })
-      if (value) {
-        setReqData(initialState)
-        if (value.value === 1) {
-          setRtuDropdawn(RTUChonbutiDropdawn)
-          setFlowCompDropdown(FlowCompChonDropdown)
-        } else {
-          setRtuDropdawn(RTUGSPDropdawn)
-          setFlowCompDropdown(FlowCompGSPDropdown)
+      const responseRtu = await ReportService.getRtuNameByRegion(value.value)
+      const objRtu = responseRtu.data.map((item, index) => {
+        return {
+          value: index,
+          label: item.rtu
         }
-      } else {
-        setRtuDropdawn(RTUChonbutiDropdawn)
-        setFlowCompDropdown(FlowCompChonDropdown)
-        // setTagNameDropdown(TagNameDropdown)
-      }
+      })
+      setReqData(initialState)
+      setRtuDropdawn(objRtu)
     } catch (err) {
       console.log(err)
+      notifyFailed('Failed!, Get RTU failed')
+    }
+  }
+
+  const onChangeRtuName = async (value) => {
+    setReqData({ ...reqData, rtu: value })
+    try {
+      const responseFlowCamp = await ReportService.getFlowCampByRegion(value.label)
+      const objFlowCamp = responseFlowCamp.data.map((item, index) => {
+        return {
+          value: index,
+          label: item.name
+        }
+      })
+      setFlowCompDropdown(objFlowCamp)
+    } catch (err) {
+      console.log(err)
+      notifyFailed('Failed!, Get Flow Comp failed')
     }
   }
 
@@ -75,18 +79,18 @@ const VerticalForm = () => {
     //**Call api get Report */
     try {
       const req = {
-        region: rtuRegions,
-        rtu: reqData.rtu,
-        flowComp: reqData.flowComp,
+        region: rtuRegions.label.toLowerCase(),
+        rtu: reqData.rtu.label,
+        flowComp: reqData.flowComp.label,
         compareAllType: reqData.compareAllType,
-        from: moment(fromDate).format("YYYY/MM/DD HH:mm"),
-        to: moment(toDate).format("YYYY/MM/DD HH:mm")
+        from: moment(fromDate).format("DD/MM/YYYY"),
+        to: moment(toDate).format("DD/MM/YYYY")
       }
 
-      history.push({
-        pathname: "/report/daily-report-gmdr/table",
-        state: req
-      })
+      const queryParams = new URLSearchParams(req).toString()
+      const url = `/report/daily-report-gmdr/table?${queryParams}`
+      window.open(url, '_blank')
+
     } catch (err) {
       console.log(err)
       setLoading(false)
@@ -96,25 +100,27 @@ const VerticalForm = () => {
 
   useEffect(() => {
     try {
-      onSelectRTU()
-      //** Call api get Head RTU Region */
-      // axios.get('get/region')
-      //   .then(res => {
-      //     console.log(res)
-      //   })
-
+      onSelectRTU({ value: 1, label: "Chonburi" })
     } catch (err) {
       console.log(err)
     }
   }, [])
 
-  const optionsStartDate = {
-    maxDate: new Date()
-  }
+  // const optionsStartDate = {
+  //   maxDate: new Date()
+  // }
 
-  const optionsEndDate = {
-    minDate: moment(fromDate).format("YYYY/MM/DD HH:mm"),
-    maxDate: moment(fromDate).add(1, 'months').endOf('day').format("YYYY/MM/DD HH:mm")
+  // const optionsEndDate = {
+  //   minDate: moment(fromDate).format("YYYY/MM/DD HH:mm"),
+  //   maxDate: moment(fromDate).add(1, 'months').endOf('day').format("YYYY/MM/DD HH:mm")
+  // }
+
+  const onChangeCompare = (checked) => {
+    setReqData((prevState) => ({
+      ...prevState,
+      compareAllType: checked,
+      flowComp: checked ? "" : prevState.flowComp
+    }))
   }
 
   return (
@@ -163,7 +169,7 @@ const VerticalForm = () => {
                     ]}
                     isClearable={false}
                     isSearchable={true}
-                    onChange={(value) => setReqData({ ...reqData, rtu: value })}
+                    onChange={(value) => onChangeRtuName(value)}
                     value={reqData.rtu}
                   />
 
@@ -198,8 +204,8 @@ const VerticalForm = () => {
                       id='exampleCustomCheckbox'
                       label='Checked'
                       checked={reqData.compareAllType}
-                      onChange={(e) => setReqData({ ...reqData, compareAllType: e.target.checked })}
-                    /> 
+                      onChange={(e) => onChangeCompare(e.target.checked)}
+                    />
                   </div>
                 </FormGroup>
               </Col>
@@ -216,7 +222,7 @@ const VerticalForm = () => {
                     id='date-time-picker'
                     className='form-control'
                     defaultValue={moment(new Date()).startOf('day').format("YYYY-MM-DD HH:mm")}
-                    options={optionsStartDate}
+                    // options={optionsStartDate}
                     onChange={(value) => setFromDate(value[0])}
                   />
                 </FormGroup>
@@ -231,7 +237,7 @@ const VerticalForm = () => {
                     id='date-time-picker'
                     className='form-control'
                     defaultValue={moment(new Date()).endOf('day').format("YYYY-MM-DD HH:mm")}
-                    options={optionsEndDate}
+                    // options={optionsEndDate}
                     onChange={(value) => setToDate(value[0])}
                   />
                 </FormGroup>
@@ -244,7 +250,7 @@ const VerticalForm = () => {
                   <Button.Ripple
                     className='mr-1'
                     color='primary'
-                    disabled={!reqData.rtu || !reqData.flowComp}
+                    disabled={!reqData.rtu || (!reqData.compareAllType && !reqData.flowComp)}
                     onClick={onSearchReport}
                   >
                     Submit

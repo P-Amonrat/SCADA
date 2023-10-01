@@ -1,28 +1,27 @@
-import { Modal, Table } from "antd"
-import { useState, useMemo } from "react"
+import { notifyFailed, notifySuccess } from "@src/views/components/toasts/notifyTopCenter"
+import { selectThemeColors } from '@utils'
+import { Modal, Spin, Table } from "antd"
+import { useEffect, useMemo, useState } from "react"
+import DataTable from "react-data-table-component"
+import { ChevronDown } from 'react-feather'
+import Select from 'react-select'
 import {
+  Button,
   Card,
+  CardBody,
   CardHeader,
   CardTitle,
-  CardBody,
-  FormGroup,
-  Row,
   Col,
-  Button,
-  Label,
   CustomInput,
-  Input
+  FormGroup,
+  Input,
+  Label,
+  Row
 } from 'reactstrap'
-import { selectThemeColors } from '@utils'
-import Select from 'react-select'
-import DataTable from "react-data-table-component"
-import { dataTableSearch, rtuOptions, tagOptions } from "../constants/data"
-import { ChevronDown } from 'react-feather'
+import ProfileService from "../Service"
 import FilterComponent from "./FilterComponent"
-import { notifySuccess, notifyFailed } from "@src/views/components/toasts/notifyTopCenter"
 
-const VerticalForm = () => {
-
+const AddProfile = () => {
   const [gmdrType, setGmdrType] = useState(1)
   const [selectRtuName, setSelectRtuName] = useState()
   const [selectTagName, setSelectTagName] = useState()
@@ -30,12 +29,29 @@ const VerticalForm = () => {
   const [addedProfile, setAddedProfile] = useState([])
   const [isOpenModal, setIsOpenModal] = useState(false)
   const [profileName, setProfileName] = useState()
-
   const [filterText, setFilterText] = useState("")
   const [resetPaginationToggle, setResetPaginationToggle] = useState(false)
-  const filteredItems = dataTableSearch.filter(
+  const [rtuOptions, setRtuOptions] = useState([])
+  const [loading, setLoading] = useState(false)
+
+  const filteredItems = addDataTable?.filter(
     item => JSON.stringify(item).toLowerCase().indexOf(filterText.toLowerCase()) !== -1
   )
+
+  useEffect(async () => {
+    try {
+      const response = await ProfileService.getRtuDropdown()
+      const obj = response?.data.map((item) => {
+        return {
+          value: item.pkey,
+          label: item.libelle
+        }
+      })
+      setRtuOptions(obj)
+    } catch (err) {
+      console.log(err)
+    }
+  }, [])
 
   const subHeaderComponent = useMemo(() => {
     const handleClear = () => {
@@ -67,19 +83,19 @@ const VerticalForm = () => {
   const DataColumn = [
     {
       name: 'RTU name',
-      selector: 'rtuName',
+      selector: 'rtu',
       sortable: true,
       maxWidth: '400px'
     },
     {
       name: 'Tag name',
-      selector: 'tagName',
+      selector: 'tag',
       sortable: true,
       maxWidth: '400px'
     },
     {
       name: 'Description',
-      selector: 'description',
+      selector: 'descr',
       sortable: true,
       maxWidth: '400px'
     },
@@ -89,7 +105,7 @@ const VerticalForm = () => {
       sortable: true,
       maxWidth: '400px',
       cell: (row) => (
-        <div>
+        <div key={row.id}>
           <Button onClick={() => onAddProfileData(row)}>
             Add
           </Button>
@@ -102,14 +118,14 @@ const VerticalForm = () => {
   const AddedDataColumn = [
     {
       title: 'Tag name',
-      dataIndex: 'tagName',
-      key: 'tagName',
+      dataIndex: 'tag',
+      key: 'tag',
       maxWidth: '400px'
     },
     {
       title: 'Description',
-      dataIndex: 'description',
-      key: 'description',
+      dataIndex: 'descr',
+      key: 'descr',
       maxWidth: '400px'
     },
     {
@@ -127,35 +143,57 @@ const VerticalForm = () => {
     }
   ]
 
-  const onSearch = () => {
+  const onSearch = async () => {
     // ** Call api search data
     try {
-      setAddDataTable(dataTableSearch)
+      setLoading(true)
+      const req = {
+        searchType: gmdrType === 1 ? "rtu" : gmdrType === 2 ? "tag" : "cal",
+        rtu_name: gmdrType === 1 ? selectRtuName.label : gmdrType === 2 ? selectTagName : ""
+      }
+      const response = await ProfileService.searchProfileManual(req)
+      setAddDataTable(response.data)
+      setLoading(false)
     } catch (err) {
       console.log(err)
+      notifyFailed("Failed!!, Get profile Failed")
     }
   }
 
-  const onSaveProfile = () => {
+  const onSaveProfile = async () => {
     try {
+      setLoading(true)
       setIsOpenModal(false)
-      console.log("addProfile", addedProfile)
-      console.log("profileName", profileName)
 
+      const req = {
+        profile_id: null, // if insert set null
+        profile_name: profileName,
+        tag_pf: `,${addedProfile.map(item => item.tag)}`,
+        desc_pf: `,${addedProfile.map(item => item.descr)}`
+      }
       //** Call api save profile */
-      setAddedProfile([])
-      notifySuccess("Success!!, Save profile successfully")
+      const response = await ProfileService.saveProfile(req)
+      if (response.message === "ok") {
+        setAddedProfile([])
+        setLoading(false)
+        notifySuccess("Success!!, Save profile successfully")
+      } else {
+        setAddedProfile([])
+        setLoading(false)
+        notifyFailed("Failed!!, Save profile Failed")
+      }
     } catch (err) {
       console.log(err)
+      notifyFailed("Failed!!, Save profile Failed")
     }
   }
 
   return (
     <>
       <Card>
-      <CardHeader>
-        <CardTitle tag='h4'>PLHSSVR1N Add Profiles</CardTitle>
-      </CardHeader>
+        <CardHeader>
+          <CardTitle tag='h4'>PLHSSVR1N Add Profiles</CardTitle>
+        </CardHeader>
         <CardBody>
           <Row style={{ justifyContent: 'center' }}>
             <Col sm='12'>
@@ -171,7 +209,7 @@ const VerticalForm = () => {
                         inline
                         label='RTU Name'
                         value={1}
-                        onClick={() => { setGmdrType(1); setAddDataTable(""); setSelectRtuName(); setSelectTagName() }}
+                        onClick={() => { setGmdrType(1); setSelectRtuName(); setSelectTagName() }}
                         defaultChecked
                       />
                     </div>
@@ -186,7 +224,7 @@ const VerticalForm = () => {
                         inline
                         label='Tag Name'
                         value={2}
-                        onClick={() => { setGmdrType(2); setAddDataTable(""); setSelectRtuName(""); setSelectTagName("") }}
+                        onClick={() => { setGmdrType(2); setSelectRtuName(""); setSelectTagName("") }}
                       />
                     </div>
                   </Col>
@@ -200,7 +238,7 @@ const VerticalForm = () => {
                         inline
                         label='Calculation'
                         value={3}
-                        onClick={() => { setGmdrType(3); setAddDataTable(""); setSelectRtuName(""); setSelectTagName("") }}
+                        onClick={() => { setGmdrType(3); setSelectRtuName(""); setSelectTagName("") }}
                       />
                     </div>
                   </Col>
@@ -217,20 +255,13 @@ const VerticalForm = () => {
                         isClearable={false}
                         onChange={(val) => setSelectRtuName(val)}
                         value={selectRtuName}
-
                       />) : gmdrType === 2 ? (
-                        <Select
-                          theme={selectThemeColors}
-                          className='react-select mt-1'
-                          classNamePrefix='select'
-                          placeholder="Tag Name"
-                          options={tagOptions}
-                          isSearchable={true}
-                          isClearable={false}
-                          onChange={(val) => setSelectTagName(val)}
+                        <Input
+                          className="mt-1"
                           value={selectTagName}
-
-                        />) : (
+                          onChange={(e) => setSelectTagName(e.target.value)}
+                        />
+                      ) : (
                       <div style={{ marginTop: "17px" }}>
                         Calculation
                       </div>
@@ -247,11 +278,16 @@ const VerticalForm = () => {
                         className='mr-1'
                         color='primary'
                         type='submit'
+                        disabled={gmdrType !== 3 && !selectRtuName && !selectTagName}
                         onClick={onSearch}
                       >
                         Search
                       </Button.Ripple>
-                      <Button.Ripple outline color='secondary' disabled={addedProfile.length === 0} type='reset' onClick={() => setIsOpenModal(true)}>
+                      <Button.Ripple
+                        outline
+                        color='primary'
+                        disabled={addedProfile.length === 0}
+                        onClick={() => setIsOpenModal(true)}>
                         Save
                       </Button.Ripple>
                     </FormGroup>
@@ -263,37 +299,39 @@ const VerticalForm = () => {
         </CardBody>
       </Card>
 
-      {addDataTable || (gmdrType !== gmdrType) ? (
-        <>
-          <Card>
-            <CardBody>
-              <DataTable
-                noHeader
-                pagination
-                data={filteredItems}
-                defaultSortField="name"
-                striped
-                subHeader
-                subHeaderComponent={subHeaderComponent}
-                columns={DataColumn}
-                className='react-dataTable'
-                sortIcon={<ChevronDown size={10} />}
-                paginationRowsPerPageOptions={[10, 25, 50, 100]}
-              />
-            </CardBody>
-          </Card>
+      <Spin spinning={loading}>
+        {addDataTable || (gmdrType !== gmdrType) ? (
+          <>
+            <Card>
+              <CardBody>
+                <DataTable
+                  noHeader
+                  pagination
+                  data={filteredItems}
+                  defaultSortField="name"
+                  stripedF
+                  subHeader
+                  subHeaderComponent={subHeaderComponent}
+                  columns={DataColumn}
+                  className='react-dataTable'
+                  sortIcon={<ChevronDown size={10} />}
+                  paginationRowsPerPageOptions={[10, 25, 50, 100]}
+                />
+              </CardBody>
+            </Card>
 
-          <Card>
-            <CardBody>
-              <Table
-                rowKey={(record) => record.id}
-                columns={AddedDataColumn}
-                dataSource={addedProfile}
-              />
-            </CardBody>
-          </Card>
-        </>
-      ) : null}
+            <Card>
+              <CardBody>
+                <Table
+                  rowKey={(record) => record.id}
+                  columns={AddedDataColumn}
+                  dataSource={addedProfile}
+                />
+              </CardBody>
+            </Card>F
+          </>
+        ) : null}
+      </Spin>
 
 
       <Modal
@@ -335,4 +373,4 @@ const VerticalForm = () => {
   )
 }
 
-export default VerticalForm
+export default AddProfile

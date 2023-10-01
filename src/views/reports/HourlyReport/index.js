@@ -1,31 +1,26 @@
-import { useState, useEffect } from 'react'
+import { notifyFailed } from "@src/views/components/toasts/notifyTopCenter"
+import '@styles/react/libs/flatpickr/flatpickr.scss'
+import { selectThemeColors } from '@utils'
+import moment from 'moment'
+import { useEffect, useState } from 'react'
+import Flatpickr from 'react-flatpickr'
 import { useHistory } from "react-router-dom"
+import Select from 'react-select'
 import {
+  Button,
   Card,
+  CardBody,
   CardHeader,
   CardTitle,
-  CardBody,
-  FormGroup,
-  Row,
   Col,
-  Input,
+  CustomInput,
   Form,
-  Button,
+  FormGroup,
   Label,
-  CustomInput
+  Row
 } from 'reactstrap'
-import { Spin } from 'antd'
-import { selectThemeColors } from '@utils'
-import Select from 'react-select'
-import '@styles/react/libs/flatpickr/flatpickr.scss'
-import axios from 'axios'
-import Flatpickr from 'react-flatpickr'
-import moment from 'moment'
-import { popupConfirm } from "@src/views/components/sweetalert"
-import { notifySuccess, notifyFailed } from "@src/views/components/toasts/notifyTopCenter"
-import { viewDailyGMDRReport } from '../constants/tableData'
-import { ViewDailyGMDRColumn } from '../TableColumn'
-import { RTUChonbutiDropdawn, RTUGSPDropdawn, FlowCompChonDropdown, FlowCompGSPDropdown, TagNameDropdown } from '../constants/Dropdawn'
+import ReportService from '../service'
+import { Spin } from "antd"
 
 const rtuRegionOptions = [
   { value: 1, label: 'Chonburi' },
@@ -41,38 +36,45 @@ const initialState = {
 const VerticalForm = () => {
   const history = useHistory()
   const [reqData, setReqData] = useState(initialState)
-  const [data, setData] = useState()
   const [rtuDropdown, setRtuDropdawn] = useState([])
   const [rtuRegions, setRtuRegions] = useState(rtuRegionOptions[0])
   const [flowCompDropdown, setFlowCompDropdown] = useState([])
-  const [tagNameDropdown, setTagNameDropdown] = useState([])
   const [loading, setLoading] = useState(false)
   const [fromDate, setFromDate] = useState(moment(new Date()).startOf('day').format("YYYY-MM-DD HH:mm"))
   const [toDate, setToDate] = useState(moment(new Date()).endOf('day').format("YYYY-MM-DD HH:mm"))
-  
-  const onSelectRTU = (value) => {
+
+  const onSelectRTU = async (value) => {
     try {
       //** Call api get RTU Region detail (default chonburi) */
-      // axios.get('get/region')
-      //   .then(res => {
-      //     console.log(res)
-      //   })
-      if (value) {
-        setReqData(initialState)
-        if (value.value === 1) {
-          setRtuDropdawn(RTUChonbutiDropdawn)
-          setFlowCompDropdown(FlowCompChonDropdown)
-        } else {
-          setRtuDropdawn(RTUGSPDropdawn)
-          setFlowCompDropdown(FlowCompGSPDropdown)
+      const responseRtu = await ReportService.getRtuNameByRegion(value.value)
+      const objRtu = responseRtu.data.map((item, index) => {
+        return {
+          value: index,
+          label: item.rtu
         }
-      } else {
-        setRtuDropdawn(RTUChonbutiDropdawn)
-        setFlowCompDropdown(FlowCompChonDropdown)
-        // setTagNameDropdown(TagNameDropdown)
-      }
+      })
+      setReqData(initialState)
+      setRtuDropdawn(objRtu)
     } catch (err) {
       console.log(err)
+      notifyFailed('Failed!, Get RTU failed')
+    }
+  }
+
+  const onChangeRtuName = async (value) => {
+    setReqData({ ...reqData, rtu: value })
+    try {
+      const responseFlowCamp = await ReportService.getFlowCampByRegion(value.label)
+      const objFlowCamp = responseFlowCamp.data.map((item, index) => {
+        return {
+          value: index,
+          label: item.name
+        }
+      })
+      setFlowCompDropdown(objFlowCamp)
+    } catch (err) {
+      console.log(err)
+      notifyFailed('Failed!, Get Flow Comp failed')
     }
   }
 
@@ -80,18 +82,17 @@ const VerticalForm = () => {
     //**Call api get Report */
     try {
       const req = {
-        region: rtuRegions,
-        rtu: reqData.rtu,
-        flowComp: reqData.flowComp,
+        region: rtuRegions.label.toLowerCase(),
+        rtu: reqData.rtu.label,
+        flowComp: reqData.flowComp.label,
         compareAllType: reqData.compareAllType,
-        from: moment(fromDate).format("YYYY/MM/DD HH:mm"),
-        to: moment(toDate).format("YYYY/MM/DD HH:mm")
+        from: moment(fromDate).format("DD/MM/YYYY"),
+        to: moment(toDate).format("DD/MM/YYYY")
       }
 
-      history.push({
-        pathname: "/report/hourly-report-gmdr/table",
-        state: req
-      })
+      const queryParams = new URLSearchParams(req).toString()
+      const url = `/report/hourly-report-gmdr/table?${queryParams}`
+      window.open(url, '_blank')
     } catch (err) {
       console.log(err)
       setLoading(false)
@@ -101,173 +102,176 @@ const VerticalForm = () => {
 
   useEffect(() => {
     try {
-      onSelectRTU()
-      //** Call api get Head RTU Region */
-      // axios.get('get/region')
-      //   .then(res => {
-      //     console.log(res)
-      //   })
-
+      onSelectRTU({ value: 1, label: "Chonburi" })
     } catch (err) {
       console.log(err)
     }
   }, [])
 
-  const optionsStartDate = {
-    maxDate: new Date()
+  // const optionsStartDate = {
+  //   maxDate: new Date()
+  // }
+
+  // const optionsEndDate = {
+  //   minDate: moment(fromDate).format("YYYY/MM/DD HH:mm"),
+  //   maxDate: moment(fromDate).add(1, 'months').endOf('day').format("YYYY/MM/DD HH:mm")
+  // }
+
+  const onChangeCompare = (checked) => {
+    setReqData((prevState) => ({
+      ...prevState,
+      compareAllType: checked,
+      flowComp: checked ? "" : prevState.flowComp
+    }))
   }
 
-  const optionsEndDate = {
-    minDate: moment(fromDate).format("YYYY/MM/DD HH:mm"),
-    maxDate: moment(fromDate).add(1, 'months').endOf('day').format("YYYY/MM/DD HH:mm")
-  }
   return (
     <>
       <Card>
         <CardHeader>
           <CardTitle tag='h4'>PLHSSVR1N View Hourly GMDR</CardTitle>
         </CardHeader>
+        <Spin spinning={loading}>
+          <CardBody>
+            <Form>
+              <Row>
+                <Col sm='4'>
+                  <FormGroup>
+                    <Label>RTU Region</Label>
+                    <Select
+                      theme={selectThemeColors}
+                      className='react-select'
+                      classNamePrefix='select'
+                      options={rtuRegionOptions}
+                      isClearable={false}
+                      isSearchable={true}
+                      onChange={(value) => { onSelectRTU(value); setRtuRegions(value) }}
+                      value={rtuRegions}
+                    />
+                  </FormGroup>
+                </Col>
 
-        <CardBody>
-          <Form>
-            <Row>
-              <Col sm='4'>
-                <FormGroup>
-                  <Label>RTU Region</Label>
-                  <Select
-                    theme={selectThemeColors}
-                    className='react-select'
-                    classNamePrefix='select'
-                    options={rtuRegionOptions}
-                    isClearable={false}
-                    isSearchable={true}
-                    onChange={(value) => { onSelectRTU(value); setRtuRegions(value) }}
-                    value={rtuRegions}
-                  />
-                </FormGroup>
-              </Col>
+              </Row>
 
-            </Row>
+              <Row style={{ justifyContent: 'center' }}>
 
-            <Row style={{ justifyContent: 'center' }}>
+                <Col sm='4'>
+                  <FormGroup>
+                    <Label>RTU Name</Label>
+                    <Select
+                      theme={selectThemeColors}
+                      className='react-select'
+                      classNamePrefix='select'
+                      placeholder={rtuRegions.value === 1 ? '---RTU Chonburi---' : '---RTU GSP---'}
+                      options={[
+                        {
+                          label: rtuRegions.value === 1 ? '---RTU Chonburi---' : '---RTU GSP---',
+                          options: rtuDropdown
+                        }
+                      ]}
+                      isClearable={false}
+                      isSearchable={true}
+                      onChange={(value) => onChangeRtuName(value)}
+                      value={reqData.rtu}
+                    />
 
-              <Col sm='4'>
-                <FormGroup>
-                  <Label>RTU Name</Label>
-                  <Select
-                    theme={selectThemeColors}
-                    className='react-select'
-                    classNamePrefix='select'
-                    placeholder={rtuRegions.value === 1 ? '---RTU Chonburi---' : '---RTU GSP---'}
-                    options={[
-                      {
-                        label: rtuRegions.value === 1 ? '---RTU Chonburi---' : '---RTU GSP---',
-                        options: rtuDropdown
-                      }
-                    ]}
-                    isClearable={false}
-                    isSearchable={true}
-                    onChange={(value) => setReqData({ ...reqData, rtu: value })}
-                    value={reqData.rtu}
-                  />
+                  </FormGroup>
+                </Col>
 
-                </FormGroup>
-              </Col>
+                <Col sm='4'>
+                  <FormGroup>
+                    <Label>Flow Comp</Label>
+                    <Select
+                      theme={selectThemeColors}
+                      className='react-select'
+                      classNamePrefix='select'
+                      placeholder={'---Flow Comp---'}
+                      options={flowCompDropdown}
+                      isClearable={false}
+                      isSearchable={true}
+                      isDisabled={reqData.compareAllType}
+                      onChange={(value) => setReqData({ ...reqData, flowComp: value })}
+                      value={reqData.flowComp}
+                    />
 
-              <Col sm='4'>
-                <FormGroup>
-                  <Label>Flow Comp</Label>
-                  <Select
-                    theme={selectThemeColors}
-                    className='react-select'
-                    classNamePrefix='select'
-                    placeholder={'---Flow Comp---'}
-                    options={flowCompDropdown}
-                    isClearable={false}
-                    isSearchable={true}
-                    isDisabled={reqData.compareAllType}
-                    onChange={(value) => setReqData({ ...reqData, flowComp: value })}
-                    value={reqData.flowComp}
-                  />
+                  </FormGroup>
+                </Col>
 
-                </FormGroup>
-              </Col>
+                <Col sm='4'>
+                  <FormGroup style={{ height: '50%' }}>
+                    <Label>Compare all flowcomp</Label>
+                    <div style={{ display: 'flex', alignItems: 'center', height: '100%', position: "relative", zIndex: 0 }}>
+                      <CustomInput
+                        type='checkbox'
+                        id='exampleCustomCheckbox'
+                        label='Checked'
+                        checked={reqData.compareAllType}
+                        onChange={(e) => onChangeCompare(e.target.checked)}
+                      />
+                    </div>
+                  </FormGroup>
+                </Col>
+              </Row>
 
-              <Col sm='4'>
-                <FormGroup style={{ height: '50%' }}>
-                  <Label>Compare all flowcomp</Label>
-                  <div style={{ display: 'flex', alignItems: 'center', height: '100%', position: "relative", zIndex: 0 }}>
-                    <CustomInput
-                      type='checkbox'
-                      id='exampleCustomCheckbox'
-                      label='Checked'
-                      checked={reqData.compareAllType}
-                      onChange={(e) => setReqData({ ...reqData, compareAllType: e.target.checked })}
-                    /> 
-                  </div>
-                </FormGroup>
-              </Col>
-            </Row>
+              <Row>
+                <Col sm='4'>
+                  <FormGroup>
+                    <Label>From</Label>
+                    <Flatpickr
+                      // value={reqData.dateTimeFrom}
+                      data-enable-time
+                      id='date-time-picker'
+                      className='form-control'
+                      defaultValue={moment(new Date()).startOf('day').format("YYYY-MM-DD HH:mm")}
+                      // options={optionsStartDate}
+                      onChange={(value) => setFromDate(value[0])}
+                    />
+                  </FormGroup>
+                </Col>
 
-            <Row>
-              <Col sm='4'>
-                <FormGroup>
-                  <Label>From</Label>
-                  <Flatpickr
-                    // value={reqData.dateTimeFrom}
-                    data-enable-time
-                    id='date-time-picker'
-                    className='form-control'
-                    defaultValue={moment(new Date()).startOf('day').format("YYYY-MM-DD HH:mm")}
-                    options={optionsStartDate}
-                    onChange={(value) => setFromDate(value[0])}
-                  />
-                </FormGroup>
-              </Col>
+                <Col sm='4'>
+                  <FormGroup>
+                    <Label>To</Label>
+                    <Flatpickr
+                      // value={reqData.dateTimeTo}
+                      data-enable-time
+                      id='date-time-picker'
+                      className='form-control'
+                      defaultValue={moment(new Date()).endOf('day').format("YYYY-MM-DD HH:mm")}
+                      // options={optionsEndDate}
+                      onChange={(value) => setToDate(value[0])}
+                    />
+                  </FormGroup>
+                </Col>
+              </Row>
 
-              <Col sm='4'>
-                <FormGroup>
-                  <Label>To</Label>
-                  <Flatpickr
-                    // value={reqData.dateTimeTo}
-                    data-enable-time
-                    id='date-time-picker'
-                    className='form-control'
-                    defaultValue={moment(new Date()).endOf('day').format("YYYY-MM-DD HH:mm")}
-                    options={optionsEndDate}
-                    onChange={(value) => setToDate(value[0])}
-                  />
-                </FormGroup>
-              </Col>
-            </Row>
+              <Row style={{ justifyContent: 'center', alignItems: 'center' }}>
+                <Col sm='10' style={{ justifyContent: 'center', alignItems: 'center' }}>
+                  <FormGroup className='d-flex mb-0 mt-2' style={{ justifyContent: 'center', alignItems: 'center' }} >
+                    <Button.Ripple
+                      className='mr-1'
+                      color='primary'
+                      disabled={!reqData.rtu || (!reqData.compareAllType && !reqData.flowComp)}
+                      onClick={onSearchReport}
+                    >
+                      Submit
+                    </Button.Ripple>
+                    <Button.Ripple
+                      outline
+                      color='secondary'
+                      type='reset'
+                      onClick={() => { setReqData(initialState); setRtuRegions(rtuRegionOptions[0]) }}
+                    >
+                      Reset
+                    </Button.Ripple>
+                  </FormGroup>
+                </Col>
+              </Row>
+            </Form>
+          </CardBody>
+        </Spin>
 
-            <Row style={{ justifyContent: 'center', alignItems: 'center' }}>
-              <Col sm='10' style={{ justifyContent: 'center', alignItems: 'center' }}>
-                <FormGroup className='d-flex mb-0 mt-2' style={{ justifyContent: 'center', alignItems: 'center' }} >
-                  <Button.Ripple
-                    className='mr-1'
-                    color='primary'
-                    disabled={!reqData.rtu || !reqData.flowComp}
-                    onClick={onSearchReport}
-                  >
-                    Submit
-                  </Button.Ripple>
-                  <Button.Ripple
-                    outline
-                    color='secondary'
-                    type='reset'
-                    onClick={() => { setReqData(initialState); setRtuRegions(rtuRegionOptions[0]) }}
-                  >
-                    Reset
-                  </Button.Ripple>
-                </FormGroup>
-              </Col>
-            </Row>
-          </Form>
-        </CardBody>
       </Card>
-
-
     </>
   )
 }

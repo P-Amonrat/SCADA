@@ -1,31 +1,27 @@
-import { useState, useContext, Fragment } from 'react'
-import classnames from 'classnames'
 import Avatar from '@components/avatar'
-import { useSkin } from '@hooks/useSkin'
-import useJwt from '@src/auth/jwt/useJwt'
-import { useDispatch } from 'react-redux'
-import { useForm } from 'react-hook-form'
-import { toast, Slide } from 'react-toastify'
-import { handleLogin } from '@store/actions/auth'
-import { AbilityContext } from '@src/utility/context/Can'
-import { Link, useHistory } from 'react-router-dom'
 import InputPasswordToggle from '@components/input-password-toggle'
-import { getHomeRouteForLoggedInUser, isObjEmpty } from '@utils'
-import { Facebook, Twitter, Mail, GitHub, HelpCircle, Coffee } from 'react-feather'
+import { useSkin } from '@hooks/useSkin'
+import { AbilityContext } from '@src/utility/context/Can'
+import { handleLogin } from '@store/actions/auth'
+import { isObjEmpty } from '@utils'
+import classnames from 'classnames'
+import { Fragment, useContext, useState } from 'react'
+import { Coffee } from 'react-feather'
+import { useForm } from 'react-hook-form'
+import { useDispatch } from 'react-redux'
+import { Link, useHistory } from 'react-router-dom'
 import {
-  Alert,
-  Row,
-  Col,
-  CardTitle,
-  CardText,
-  Form,
-  Input,
-  FormGroup,
-  Label,
-  CustomInput,
   Button,
-  UncontrolledTooltip
+  CardText,
+  CardTitle,
+  Col,
+  Form,
+  FormGroup,
+  Input,
+  Label,
+  Row
 } from 'reactstrap'
+import { CallApiClient } from '../../../config'
 
 import '@styles/base/pages/page-auth.scss'
 
@@ -50,27 +46,49 @@ const Login = props => {
   const history = useHistory()
   const [email, setEmail] = useState('admin@demo.com')
   const [password, setPassword] = useState('admin')
+  const [error, setError] = useState(false)
 
   const { register, errors, handleSubmit } = useForm()
   const illustration = skin === 'dark' ? 'login-v2-dark.svg' : 'login-v2.svg',
     source = require(`@src/assets/images/pages/${illustration}`).default
 
-  const onSubmit = data => {
+  // const onSubmit = data => {
+  //   if (isObjEmpty(errors)) {
+  //     useJwt
+  //       .login({ email, password })
+  //       .then(res => {
+  //         console.log("res : ", res)
+  //         const data = { ...res.data.userData, accessToken: res.data.accessToken, refreshToken: res.data.refreshToken }
+  //         dispatch(handleLogin(data))
+  //         ability.update(res.data.userData.ability)
+  //         history.push(getHomeRouteForLoggedInUser(data.role))
+  //         toast.success(
+  //           <ToastContent name={data.fullName || data.username || 'John Doe'} role={data.role || 'admin'} />,
+  //           { transition: Slide, hideProgressBar: true, autoClose: 2000 }
+  //         )
+  //       })
+  //       .catch(err => console.log(err))
+  //   }
+  // }
+
+  const onSubmit = async data => {
     if (isObjEmpty(errors)) {
-      useJwt
-        .login({ email, password })
+      await CallApiClient("api/login", data)
         .then(res => {
-          console.log("res : ", res)
-          const data = { ...res.data.userData, accessToken: res.data.accessToken, refreshToken: res.data.refreshToken }
-          dispatch(handleLogin(data))
-          ability.update(res.data.userData.ability)
-          history.push(getHomeRouteForLoggedInUser(data.role))
-          toast.success(
-            <ToastContent name={data.fullName || data.username || 'John Doe'} role={data.role || 'admin'} />,
-            { transition: Slide, hideProgressBar: true, autoClose: 2000 }
-          )
+          if (res.status === 200) {
+            const data = { accessToken: res.data.token, refreshToken: res.data.token }
+            dispatch(handleLogin(data))
+            ability.update([{ action: 'manage', subject: 'all' }])
+            // history.push(getHomeRouteForLoggedInUser(data.role))
+            history.push("/report/HistoricalReport")
+          } else {
+            setError(true)
+          }
         })
-        .catch(err => console.log(err))
+        .catch(err => {
+          console.log(err)
+          setError(true)
+        })
     }
   }
 
@@ -139,7 +157,7 @@ const Login = props => {
               Welcome to Scada 👋
             </CardTitle>
             <CardText className='mb-2'>Please sign-in to your account</CardText>
-            <Alert color='primary'>
+            {/* <Alert color='primary'>
               <div className='alert-body font-small-2'>
                 <p>
                   <small className='mr-50'>
@@ -161,21 +179,20 @@ const Login = props => {
               <UncontrolledTooltip target='login-tip' placement='left'>
                 This is just for ACL demo purpose.
               </UncontrolledTooltip>
-            </Alert>
+            </Alert> */}
             <Form className='auth-login-form mt-2' onSubmit={handleSubmit(onSubmit)}>
               <FormGroup>
-                <Label className='form-label' for='login-email'>
-                  Email
+                <Label className='form-label' for='user_name'>
+                  Username
                 </Label>
                 <Input
                   autoFocus
-                  type='email'
-                  value={email}
-                  id='login-email'
-                  name='login-email'
-                  placeholder='john@example.com'
+                  // value={email}
+                  id='user_name'
+                  name='user_name'
+                  placeholder='Username'
                   onChange={e => setEmail(e.target.value)}
-                  className={classnames({ 'is-invalid': errors['login-email'] })}
+                  // className={classnames({ 'is-invalid': errors['user_name'] })}
                   innerRef={register({ required: true, validate: value => value !== '' })}
                 />
               </FormGroup>
@@ -189,12 +206,12 @@ const Login = props => {
                   </Link> */}
                 </div>
                 <InputPasswordToggle
-                  value={password}
-                  id='login-password'
-                  name='login-password'
+                  // value={password}
+                  id='password'
+                  name='password'
                   className='input-group-merge'
                   onChange={e => setPassword(e.target.value)}
-                  className={classnames({ 'is-invalid': errors['login-password'] })}
+                  className={classnames({ 'is-invalid': errors['password'] })}
                   innerRef={register({ required: true, validate: value => value !== '' })}
                 />
               </FormGroup>
@@ -205,6 +222,9 @@ const Login = props => {
                 Sign in
               </Button.Ripple>
             </Form>
+            {error && (
+              <div style={{ color: "red", marginTop: "10px" }}>*Invalid username or password</div>
+            )}
             {/* <p className='text-center mt-2'>
               <span className='mr-25'>New on our platform?</span>
               <Link to='/register'>

@@ -1,21 +1,20 @@
+import { selectThemeColors } from '@utils'
 import React from "react"
+import Select from 'react-select'
 import {
-  Table,
-  Modal,
-  ModalHeader,
-  ModalBody,
-  Row,
+  Button,
   Col,
   Form,
   FormGroup,
-  Label,
   Input,
-  Button
+  Label,
+  Modal,
+  ModalBody,
+  ModalHeader,
+  Row
 } from 'reactstrap'
-import Select from 'react-select'
-import { selectThemeColors } from '@utils'
 
-const EditUserModal = ({ isOpen, setIsOpen, data, setData, onSaveUser, levelList }) => {
+const EditUserModal = ({ isOpen, setIsOpen, password, setPassword, onSaveUser, levelList, setGetUserData, getUserData }) => {
 
   return (
     <Modal isOpen={isOpen}>
@@ -32,8 +31,8 @@ const EditUserModal = ({ isOpen, setIsOpen, data, setData, onSaveUser, levelList
                   id="username"
                   name="username"
                   placeholder="Username"
-                  value={data.name}
-                  onChange={(e) => setData({ ...data, name: e.target.value })}
+                  value={getUserData?.user_name}
+                  disabled
                 />
               </FormGroup>
             </Col>
@@ -47,8 +46,8 @@ const EditUserModal = ({ isOpen, setIsOpen, data, setData, onSaveUser, levelList
                   name="password"
                   placeholder="Password"
                   type="password"
-                  value={data.password}
-                  onChange={(e) => setData({ ...data, password: e.target.value })}
+                  // value={data.password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </FormGroup>
             </Col>
@@ -60,16 +59,21 @@ const EditUserModal = ({ isOpen, setIsOpen, data, setData, onSaveUser, levelList
                 <Select
                   theme={selectThemeColors}
                   classNamePrefix='select'
-                  value={data.level}
+                  value={levelList.filter((item) => item.value === getUserData?.user_lavel)}
                   options={levelList}
-                  onChange={(value) => setData({ ...data, level: value })}
+                  onChange={(value) => setGetUserData({ ...getUserData, user_lavel: value.value })}
                 />
               </FormGroup>
             </Col>
           </Row>
           <Row>
             <Col className='d-flex align-item-center justify-content-center'>
-              <Button className='mr-1' color='primary' onClick={onSaveUser}>
+              <Button
+                className='mr-1'
+                color='primary'
+                disabled={!getUserData.user_name || !password || !getUserData.user_lavel}
+                onClick={onSaveUser}
+              >
                 Edit User
               </Button>
               <Button outline color='secondary' type='reset' onClick={() => setIsOpen(false)}>

@@ -29,6 +29,7 @@ const Router = () => {
 
   // ** ACL Ability Context
   const ability = useContext(AbilityContext)
+  ability.update([{ action: 'manage', subject: 'all' }])
 
   // ** Default Layout
   const DefaultLayout = layout === 'horizontal' ? 'HorizontalLayout' : 'VerticalLayout'
