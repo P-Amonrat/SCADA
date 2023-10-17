@@ -24,6 +24,8 @@ import {
 import { CallApiClient } from '../../../config'
 
 import '@styles/base/pages/page-auth.scss'
+import GetRoleService from './services'
+import { getHomeRouteForLoggedInUser } from '../../../utility/Utils'
 
 const ToastContent = ({ name, role }) => (
   <Fragment>
@@ -74,13 +76,16 @@ const Login = props => {
   const onSubmit = async data => {
     if (isObjEmpty(errors)) {
       await CallApiClient("api/login", data)
-        .then(res => {
+        .then(async res => {
           if (res.status === 200) {
             const data = { accessToken: res.data.token, refreshToken: res.data.token }
             dispatch(handleLogin(data))
             ability.update([{ action: 'manage', subject: 'all' }])
-            // history.push(getHomeRouteForLoggedInUser(data.role))
-            history.push("/report/HistoricalReport")
+            const response = await GetRoleService.getRole()
+            localStorage.setItem('role', response.data.class_name)
+            location.reload()
+            history.push(getHomeRouteForLoggedInUser(response.data.class_name))
+            // history.push("/report/HistoricalReport")
           } else {
             setError(true)
           }

@@ -65,6 +65,7 @@ export default class JwtService {
           const config = useJwt.jwtConfig
           window.location.href = '/misc/not-authorized'
           localStorage.removeItem('userData')
+          localStorage.removeItem('role')
           localStorage.removeItem(config.storageTokenKeyName)
           localStorage.removeItem(config.storageRefreshTokenKeyName)
           return retryOriginalRequest

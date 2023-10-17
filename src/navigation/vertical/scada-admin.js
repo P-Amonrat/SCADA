@@ -11,24 +11,6 @@ export default [
     navLink: '/report/HistoricalReport'
   },
   {
-    id: 'report2',
-    title: 'View Daily GMDR', // PLHSSVR1N 
-    icon: <Inbox size={20} />,
-    navLink: '/report/DailyReport'
-  },
-  {
-    id: 'report3',
-    title: 'View Hourly GMDR', // PLHSSVR1N 
-    icon: <FileMinus size={20} />,
-    navLink: '/report/HourlyReport'
-  },
-  {
-    id: 'report4',
-    title: 'View Check GMDR', // PLHSSVR1N 
-    icon: <FolderMinus size={20} />,
-    navLink: '/report/CheckReport'
-  },
-  {
     id: 'profiles',
     title: 'Profiles',
     icon: <Users size={20} />,
@@ -50,25 +32,6 @@ export default [
         title: 'Authorize Profile', // PLHSSVR1N 
         // icon: <UserCheck size={20} />,
         navLink: '/profiles/authorize'
-      }
-    ]
-  },
-  {
-    id: 'users',
-    title: 'Users',
-    icon: <User size={20} />,
-    children: [
-      {
-        id: 'add-user',
-        title: 'Add', // PLHSSVR1N 
-        // icon: <UserPlus size={20} />,
-        navLink: '/users/add'
-      },
-      {
-        id: 'main-user',
-        title: 'List Users', // PLHSSVR1N 
-        // icon: <UserCheck size={20} />,
-        navLink: '/users/list'
       }
     ]
   }

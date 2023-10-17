@@ -1,15 +1,31 @@
 // ** Navigation sections imports
 import apps from './apps'
-import pages from './pages'
-import forms from './forms'
+import webAdmin from './web-admin'
+import gasAdmin from './gas-admin'
 import tables from './tables'
 import others from './others'
-import dashboards from './dashboards'
+import scdaAdmin from './scada-admin'
 import uiElements from './ui-elements'
-import chartsAndMaps from './charts-maps'
+import gmdrAdmin from './gmdr-admin'
 
 // ** Merge & Export
 // export default [...dashboards, ...apps, ...pages, ...uiElements, ...forms, ...tables, ...chartsAndMaps, ...others]
 
 // export default [...dashboards, ...apps]
-export default [...apps]
+
+const role = localStorage.getItem('role')
+let exportedValue
+
+if (role === "GAS_ADMIN") {
+  exportedValue = [...gasAdmin]
+} else if (role === "GMDR_ADMIN") {
+  exportedValue = [...gmdrAdmin]
+} else if (role === "SCADA_ADMIN") {
+  exportedValue = [...scdaAdmin]
+} else if (role === "ADMIN_ROOT") {
+  exportedValue = [...webAdmin]
+} else {
+  exportedValue = [...apps]
+}
+
+export default exportedValue

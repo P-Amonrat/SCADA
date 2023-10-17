@@ -18,7 +18,13 @@ import UsersRoutes from './Users'
 const TemplateTitle = '%s - Scada'
 
 // ** Default Route
-const DefaultRoute = '/report/HistoricalReport'
+let DefaultRoute
+const role = localStorage.getItem('role')
+if (role === "GMDR_ADMIN") {
+   DefaultRoute = '/report/DailyReport'
+} else {
+  DefaultRoute = '/report/HistoricalReport'
+}
 
 // ** Merge Routes
 const Routes = [
