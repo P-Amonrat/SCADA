@@ -39,8 +39,8 @@ const VerticalForm = () => {
   const [loading, setLoading] = useState(false)
   const [isOpenModal, setIsOpenModal] = useState(false)
   const [addedProfile, setAddedProfile] = useState([])
-  const [fromDate, setFromDate] = useState(moment(new Date()).startOf('day').format("YYYY-MM-DD HH:mm"))
-  const [toDate, setToDate] = useState(moment(new Date()).endOf('day').format("YYYY-MM-DD HH:mm"))
+  const [fromDate, setFromDate] = useState()
+  const [toDate, setToDate] = useState()
 
   const fetchData = async () => {
     try {
@@ -63,15 +63,6 @@ const VerticalForm = () => {
     fetchData()
   }, [])
 
-  // const optionsStartDate = {
-  //   maxDate: new Date()
-  // }
-
-  // const optionsEndDate = {
-  //   minDate: moment(fromDate).format("YYYY/MM/DD HH:mm"),
-  //   maxDate: moment(fromDate).add(1, 'months').endOf('day').format("YYYY/MM/DD HH:mm")
-  // }
-
   const onSubmitData = () => {
     try {
       const req = {
@@ -84,7 +75,7 @@ const VerticalForm = () => {
         to: moment(toDate).format("YYYY/MM/DD HH:mm")
       }
 
-      const queryParams = new URLSearchParams(req).toString()      
+      const queryParams = new URLSearchParams(req).toString()
       const url = `/report/historical-report-gmdr/table?${queryParams}`
       window.open(url, '_blank')
 
@@ -182,7 +173,6 @@ const VerticalForm = () => {
                     </div>
                   </FormGroup>
                 </Col>
-                {/* </Row> */}
               </div>
 
 
@@ -227,12 +217,13 @@ const VerticalForm = () => {
                     <Label>From</Label>
                     <Label for='date-time-picker'></Label>
                     <Flatpickr
-                      // value={reqData.dateTimeFrom}
                       data-enable-time
-                      id='date-time-picker'
                       className='form-control'
                       defaultValue={moment(new Date()).startOf('day').format("YYYY-MM-DD HH:mm")}
-                      // options={optionsStartDate}
+                      options={{
+                        dateFormat: "Y-m-d H:i",
+                        maxDate: "today"
+                      }}
                       onChange={(value) => setFromDate(value[0])}
                     />
                   </FormGroup>
@@ -242,41 +233,32 @@ const VerticalForm = () => {
                   <FormGroup>
                     <Label>To</Label>
                     <Flatpickr
-                      // value={reqData.dateTimeTo}
-                      data-enable-time
-                      id='date-time-picker'
+                      id='toDateTimePicker'
                       className='form-control'
                       defaultValue={moment(new Date()).endOf('day').format("YYYY-MM-DD HH:mm")}
-                      // options={optionsEndDate}
+                      options={{
+                        dateFormat: "Y-m-d H:i",
+                        minDate: moment(new Date(fromDate)).format("YYYY-MM-DD HH:mm"),
+                        maxDate: moment(new Date(fromDate)).add(1, 'months').format("YYYY-MM-DD HH:mm")
+                      }}
                       onChange={(value) => setToDate(value[0])}
                     />
                   </FormGroup>
                 </Col>
-                {/* </Row> */}
               </div>
             </div>
 
             <Row style={{ justifyContent: 'center', alignItems: 'center' }}>
               <Col sm='12' style={{ justifyContent: 'center', alignItems: 'center' }}>
                 <FormGroup className='d-flex mb-0 mt-2' style={{ justifyContent: 'center', alignItems: 'center' }} >
-                  {/* <Link
-                    to={{
-                      pathname: "/report/historical-report-gmdr/table",
-                      state: {
-                        fromNotifications: true,
-                      }
-                    }}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  > */}
-                    <Button.Ripple
-                      className='mr-1'
-                      color='primary'
-                      disabled={!(reqData.profileName.value === 0 && addedProfile.length > 0) && !reqData.profileName.value}
-                      onClick={onSubmitData}
-                    >
-                      Submit
-                    </Button.Ripple>
+                  <Button.Ripple
+                    className='mr-1'
+                    color='primary'
+                    disabled={!(reqData.profileName.value === 0 && addedProfile.length > 0) && !reqData.profileName.value}
+                    onClick={onSubmitData}
+                  >
+                    Submit
+                  </Button.Ripple>
                   {/* </Link> */}
                   <Button.Ripple outline color='secondary' type='reset' onClick={onResetData}>
                     Reset

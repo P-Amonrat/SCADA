@@ -59,7 +59,7 @@ const LoginV1 = () => {
                   </g>
                 </g>
               </svg>
-              <h2 className='brand-text text-primary ml-1'>Scada</h2>
+              <h2 className='brand-text text-primary ml-1'>SCADA</h2>
             </Link>
             <CardTitle tag='h4' className='mb-1'>
               Welcome to Scada 👋

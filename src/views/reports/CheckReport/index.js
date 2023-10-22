@@ -2,7 +2,6 @@ import '@styles/react/libs/flatpickr/flatpickr.scss'
 import moment from 'moment'
 import { useState } from 'react'
 import Flatpickr from 'react-flatpickr'
-import { useHistory } from "react-router-dom"
 import {
   Button,
   Card,
@@ -86,7 +85,6 @@ const VerticalForm = () => {
                     <Col xl='4' md='4' sm='4'>
                       <Label className="mb-1" >Datetime</Label>
                       <Flatpickr
-                        // value={reqData.dateTime}
                         data-enable-time
                         id='date-time-picker'
                         className='form-control'

@@ -21,7 +21,7 @@ import {
 import ReportService from '../service'
 
 const rtuRegionOptions = [
-  { value: 1, label: 'Chonburi' },
+  { value: 1, label: 'CHONBURI' },
   { value: 2, label: 'GSP' }
 ]
 
@@ -37,8 +37,8 @@ const VerticalForm = () => {
   const [rtuRegions, setRtuRegions] = useState(rtuRegionOptions[0])
   const [flowCompDropdown, setFlowCompDropdown] = useState([])
   const [loading, setLoading] = useState(false)
-  const [fromDate, setFromDate] = useState(moment(new Date()).startOf('day').format("YYYY-MM-DD HH:mm"))
-  const [toDate, setToDate] = useState(moment(new Date()).endOf('day').format("YYYY-MM-DD HH:mm"))
+  const [fromDate, setFromDate] = useState()
+  const [toDate, setToDate] = useState()
 
   const onSelectRTU = async (value) => {
     try {
@@ -100,20 +100,11 @@ const VerticalForm = () => {
 
   useEffect(() => {
     try {
-      onSelectRTU({ value: 1, label: "Chonburi" })
+      onSelectRTU({ value: 1, label: "CHONBURI" })
     } catch (err) {
       console.log(err)
     }
   }, [])
-
-  // const optionsStartDate = {
-  //   maxDate: new Date()
-  // }
-
-  // const optionsEndDate = {
-  //   minDate: moment(fromDate).format("YYYY/MM/DD HH:mm"),
-  //   maxDate: moment(fromDate).add(1, 'months').endOf('day').format("YYYY/MM/DD HH:mm")
-  // }
 
   const onChangeCompare = (checked) => {
     setReqData((prevState) => ({
@@ -160,10 +151,10 @@ const VerticalForm = () => {
                     theme={selectThemeColors}
                     className='react-select'
                     classNamePrefix='select'
-                    placeholder={rtuRegions.value === 1 ? '---RTU Chonburi---' : '---RTU GSP---'}
+                    placeholder={rtuRegions.value === 1 ? '---RTU CHONBURI---' : '---RTU GSP---'}
                     options={[
                       {
-                        label: rtuRegions.value === 1 ? '---RTU Chonburi---' : '---RTU GSP---',
+                        label: rtuRegions.value === 1 ? '---RTU CHONBURI---' : '---RTU GSP---',
                         options: rtuDropdown
                       }
                     ]}
@@ -217,12 +208,13 @@ const VerticalForm = () => {
                 <FormGroup>
                   <Label>From</Label>
                   <Flatpickr
-                    // value={reqData.dateTimeFrom}
-                    data-enable-time
                     id='date-time-picker'
                     className='form-control'
                     defaultValue={moment(new Date()).startOf('day').format("YYYY-MM-DD HH:mm")}
-                    // options={optionsStartDate}
+                    options={{
+                      dateFormat: "Y-m-d H:i",
+                      maxDate: "today"
+                    }}
                     onChange={(value) => setFromDate(value[0])}
                   />
                 </FormGroup>
@@ -232,12 +224,14 @@ const VerticalForm = () => {
                 <FormGroup>
                   <Label>To</Label>
                   <Flatpickr
-                    // value={reqData.dateTimeTo}
-                    data-enable-time
                     id='date-time-picker'
                     className='form-control'
                     defaultValue={moment(new Date()).endOf('day').format("YYYY-MM-DD HH:mm")}
-                    // options={optionsEndDate}
+                    options={{
+                      dateFormat: "Y-m-d H:i",
+                      minDate: moment(new Date(fromDate)).format("YYYY-MM-DD HH:mm"),
+                      maxDate: moment(new Date(fromDate)).add(1, 'months').format("YYYY-MM-DD HH:mm")
+                    }}
                     onChange={(value) => setToDate(value[0])}
                   />
                 </FormGroup>

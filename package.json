@@ -118,7 +118,7 @@
     "react-app-rewire-aliases": "^0.2.0",
     "react-app-rewire-postcss": "^3.0.2",
     "react-app-rewire-sass-rule": "^2.1.1",
-    "react-app-rewired": "^2.1.6",
+    "react-app-rewired": "^2.2.1",
     "sass-loader": "^8.0.2"
   },
   "browserslist": [

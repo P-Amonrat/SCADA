@@ -40,7 +40,7 @@ const HourlyReportTable = () => {
   const onExportReport = () => {
     const result = reportData.map(item => {
       const matchingKeys = Object.keys(item).filter(key => {
-        return selectCheck.some(arrItem => arrItem.id === key && arrItem.check)
+        return selectCheck.length > 0 ? !selectCheck.some(arrItem => arrItem.id === key && arrItem.check === false) : reportData
       })
 
       matchingKeys.unshift('datetime')
@@ -70,7 +70,23 @@ const HourlyReportTable = () => {
         try {
           const date = new Date()
           const getDate = formatDate(date)
-          const worksheet = XLSX.utils.json_to_sheet(convertedList)
+          
+          const worksheet = XLSX.utils.json_to_sheet(convertedList, {origin: 'A8'})
+
+          const headerRow1 = ['REGION:', `${headerData.region.toUpperCase()}`]
+          const headerRow2 = ['RTU NAME:', `${headerData.rtuName}`]
+          const headerRow3 = ['FLOWCOMP NAME: ', `${headerData.flowcompName}`]
+          const headerRow4 = ['TYPE:', `${headerData.type}`]
+          const headerRow5 = ['START DATE:', `${headerData.startDate}`]
+          const headerRow6 = ['FINISH DATE:', `${headerData.endDate}`]
+
+          XLSX.utils.sheet_add_aoa(worksheet, [headerRow1], { origin: 'A1' })
+          XLSX.utils.sheet_add_aoa(worksheet, [headerRow2], { origin: 'A2' })
+          XLSX.utils.sheet_add_aoa(worksheet, [headerRow3], { origin: 'A3' })
+          XLSX.utils.sheet_add_aoa(worksheet, [headerRow4], { origin: 'A4' })
+          XLSX.utils.sheet_add_aoa(worksheet, [headerRow5], { origin: 'A5' })
+          XLSX.utils.sheet_add_aoa(worksheet, [headerRow6], { origin: 'A6' })
+
           const workbook = XLSX.utils.book_new()
           XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1')
 
@@ -104,6 +120,7 @@ const HourlyReportTable = () => {
           <>
             <Checkbox
               checked={selectCheck.find(items => items.id === item.selector)?.check}
+              defaultChecked
               onChange={(e) => onCheckExport(e.target.checked, item.selector)}
             >
               {item.name.replace(/<\/?b>/g, '')}
@@ -182,7 +199,7 @@ const HourlyReportTable = () => {
   return (
     <Card>
       <div className="header-report-table">
-        <p>REGION: <b>{headerData?.region}</b></p>
+        <p>REGION: <b>{headerData?.region.toUpperCase()}</b></p>
         <p>RTU NAME: <b>{headerData?.rtuName}</b></p>
         <p>FLOWCOMP NAME: <b>{headerData?.flowcompName}</b></p>
         <p>TYPE: <b>{headerData?.type}</b></p>
@@ -201,12 +218,12 @@ const HourlyReportTable = () => {
           <Spin spinning={loading}>
             <DataTable
               noHeader
-              pagination
+              // pagination
               data={reportData}
               columns={colums}
               className='react-dataTable'
               sortIcon={<ChevronDown size={10} />}
-              paginationRowsPerPageOptions={[10, 25, 50, 100]}
+              // paginationRowsPerPageOptions={[10, 25, 50, 100]}
             />
           </Spin>
         </Col>

@@ -3,7 +3,7 @@
 //Template config options
 const themeConfig = {
   app: {
-    appName: 'Scada',
+    appName: 'SCADA',
     appLogoImage: require('@src/assets/images/logo/PTT-logo.png').default
   },
   layout: {

@@ -40,7 +40,7 @@ const HistoricalReportTable = () => {
   const onExportReport = () => {
     const result = reportData.map(item => {
       const matchingKeys = Object.keys(item).filter(key => {
-        return selectCheck.some(arrItem => arrItem.id === key && arrItem.check)
+        return selectCheck.length > 0 ? !selectCheck.some(arrItem => arrItem.id === key && arrItem.check === false) : reportData
       })
 
       matchingKeys.unshift('datetime')
@@ -61,6 +61,7 @@ const HistoricalReportTable = () => {
           newObj[matchingDataItem.name.replace(/<\/?b>/g, '').replace(/<br>/g, ':')] = item[key]
         }
       }
+
       return newObj
     })
 
@@ -70,7 +71,22 @@ const HistoricalReportTable = () => {
           setLoading(true)
           const date = new Date()
           const getDate = formatDate(date)
-          const worksheet = XLSX.utils.json_to_sheet(convertedList)
+          const worksheet = XLSX.utils.json_to_sheet(convertedList, {origin: 'A8'})
+
+          const headerRow1 = ['PROFILE NAME: ', `${headerData.profile}`]
+          const headerRow2 = ['TAG NAME:', `${headerData.tagName}`]
+          const headerRow3 = ['ARCHIVING TYPE: ', `${headerData.archiveType}`]
+          const headerRow4 = ['TYPE VALUE:', `${headerData.typeValue}`]
+          const headerRow5 = ['START DATE:', `${headerData.startDate}`]
+          const headerRow6 = ['FINISH DATE:', `${headerData.endDate}`]
+
+          XLSX.utils.sheet_add_aoa(worksheet, [headerRow1], { origin: 'A1' })
+          XLSX.utils.sheet_add_aoa(worksheet, [headerRow2], { origin: 'A2' })
+          XLSX.utils.sheet_add_aoa(worksheet, [headerRow3], { origin: 'A3' })
+          XLSX.utils.sheet_add_aoa(worksheet, [headerRow4], { origin: 'A4' })
+          XLSX.utils.sheet_add_aoa(worksheet, [headerRow5], { origin: 'A5' })
+          XLSX.utils.sheet_add_aoa(worksheet, [headerRow6], { origin: 'A6' })
+
           const workbook = XLSX.utils.book_new()
           XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1')
 
@@ -104,6 +120,7 @@ const HistoricalReportTable = () => {
           <>
             <Checkbox
               checked={selectCheck.find(items => items.id === item.selector)?.check}
+              defaultChecked
               onChange={(e) => onCheckExport(e.target.checked, item.selector)}
             >
               {item.name.replace(/<\/?b>/g, '').split('<br>').map((text, index) => (
@@ -198,12 +215,12 @@ const HistoricalReportTable = () => {
   return (
     <Card>
       <div className="header-report-table">
-        <p>Profile name: <b>{headerData?.profile}</b></p>
-        <p>Tag name: <b>{headerData?.tagName}</b></p>
-        <p>Archiving type: <b>{headerData?.archiveType}</b></p>
-        <p>Type value: <b>{headerData?.typeValue}</b></p>
-        <p>Start date: <b>{headerData?.startDate}</b></p>
-        <p>Finish date: <b>{headerData?.endDate}</b></p>
+        <p>PROFILE NAME: <b>{headerData?.profile}</b></p>
+        <p>TAG NAME: <b>{headerData?.tagName}</b></p>
+        <p>ARCHIVING TYPE: <b>{headerData?.archiveType}</b></p>
+        <p>TYPE VALUE: <b>{headerData?.typeValue}</b></p>
+        <p>START DATE: <b>{headerData?.startDate}</b></p>
+        <p>FINISH DATE: <b>{headerData?.endDate}</b></p>
       </div>
       <Row >
         <Col sm={12}>

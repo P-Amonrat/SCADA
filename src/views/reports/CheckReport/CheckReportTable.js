@@ -105,8 +105,20 @@ const CheckReportTable = () => {
         //**Call api Get report List */
         const response = await ReportService.getCheckGmdrReport(req)
         if (response?.message === "ok") {
+
+          const checkStatus = response?.data?.table?.data.map((item) => ({
+            c0: item.c0,
+            c1: item.c1,
+            c2: item.c2,
+            c3: (
+              <div style={{ color: item.c3 === "Fail" ? "red" : "green" }}>
+                {item.c3}
+              </div>
+            )
+          }))
+
           setColumnTable(response.data.table.title)
-          setReportData(response.data.table.data)
+          setReportData(checkStatus)
           setLoading(false)
           notifySuccess('Success!, Get report successfully')
         }

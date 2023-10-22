@@ -83,6 +83,7 @@
       font-size: inherit;
       .brand-logo img {
         max-width: 36px;
+        z-index: 2;
       }
       .brand-text {
         color: $primary;
