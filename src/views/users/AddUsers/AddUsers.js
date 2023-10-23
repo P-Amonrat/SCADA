@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react"
 import { Card, CardHeader, CardTitle, CardBody, FormGroup, Form, Label, Input, Row, Col, Button } from "reactstrap"
 import Select from 'react-select'
 import { selectThemeColors } from '@utils'
-import { LevelDropdown } from '../FakeData'
+import { LevelOptions } from '../FakeData'
 import { notifySuccess, notifyFailed } from "@src/views/components/toasts/notifyTopCenter"
 import { popupConfirm } from "@src/views/components/sweetalert"
 import UsersService from "../service"
@@ -23,7 +23,7 @@ const AddUsers = () => {
   useEffect(() => {
     //**Call Api Get Level for display on Select Level */
     try {
-      setLevelList(LevelDropdown)
+      setLevelList(LevelOptions)
     } catch (err) {
       console.log(err)
     }

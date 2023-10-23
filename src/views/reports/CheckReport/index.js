@@ -15,16 +15,26 @@ import {
   Label,
   Row
 } from 'reactstrap'
+import Select from 'react-select'
+import { selectThemeColors } from '@utils'
+
+const statusOptions = [
+  { value: 0, label: "Default" },
+  { value: 1, label: "Success" },
+  { value: 2, label: "Fail" }
+]
 
 const VerticalForm = () => {
   const [type, setType] = useState(1)
   const [dateTime, setDateTime] = useState()
+  const [filterStatus, setFilterStatus] = useState()
 
   const onSearchReport = () => {
     try {
       const req = {
         type: type === 1 ? "daily_gmdr" : "hourly_gmdr",
-        dateTime: moment(dateTime).format("YYYY/MM/DD HH:mm")
+        dateTime: moment(dateTime).format("YYYY/MM/DD HH:mm"),
+        status : filterStatus.label
       }
 
       const queryParams = new URLSearchParams(req).toString()
@@ -53,7 +63,7 @@ const VerticalForm = () => {
               <Col>
                 <FormGroup>
                   <Row>
-                    <Col xl='4' md='4' sm='4'>
+                    <Col xl='3' md='3' sm='3'>
                       <Label>GMDR Type</Label>
                       <div className='demo-inline-spacing' style={{ marginBottom: "15px" }}>
                         <CustomInput
@@ -68,7 +78,7 @@ const VerticalForm = () => {
                         />
                       </div>
                     </Col>
-                    <Col xl='4' md='4' sm='4'>
+                    <Col xl='3' md='3' sm='3'>
                       <Label></Label>
                       <div className='demo-inline-spacing' >
                         <CustomInput
@@ -82,7 +92,18 @@ const VerticalForm = () => {
                         />
                       </div>
                     </Col>
-                    <Col xl='4' md='4' sm='4'>
+                    <Col xl='3' md='3' sm='3'>
+                      <Label className="mb-1" >Status</Label>
+                      <Select
+                        theme={selectThemeColors}
+                        className='react-select'
+                        classNamePrefix='select'
+                        placeholder="Select status"
+                        options={statusOptions}
+                        onChange={(value) => setFilterStatus(value)}
+                      />
+                    </Col>
+                    <Col xl='3' md='3' sm='3'>
                       <Label className="mb-1" >Datetime</Label>
                       <Flatpickr
                         data-enable-time
@@ -106,6 +127,7 @@ const VerticalForm = () => {
                     className='mr-1'
                     color='primary'
                     onClick={onSearchReport}
+                    disabled={!filterStatus}
                   >
                     Submit
                   </Button.Ripple>

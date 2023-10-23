@@ -208,6 +208,7 @@ const VerticalForm = () => {
                 <FormGroup>
                   <Label>From</Label>
                   <Flatpickr
+                    data-enable-time
                     id='date-time-picker'
                     className='form-control'
                     defaultValue={moment(new Date()).startOf('day').format("YYYY-MM-DD HH:mm")}
@@ -224,6 +225,7 @@ const VerticalForm = () => {
                 <FormGroup>
                   <Label>To</Label>
                   <Flatpickr
+                    data-enable-time
                     id='date-time-picker'
                     className='form-control'
                     defaultValue={moment(new Date()).endOf('day').format("YYYY-MM-DD HH:mm")}

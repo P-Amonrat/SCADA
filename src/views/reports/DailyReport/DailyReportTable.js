@@ -19,7 +19,7 @@ import ReportService from "../service"
 
 const DailyReportTable = () => {
   const [loading, setLoading] = useState(false)
-  const [reportData, setReportData] = useState()
+  const [reportData, setReportData] = useState([])
   const [headerData, setHeaderData] = useState()
   const [selectCheck, setSelectCheck] = useState([])
   const [columnsTable, setColumnTable] = useState()
@@ -223,7 +223,7 @@ const DailyReportTable = () => {
               className='mr-2'
               color='primary'
               onClick={onExportReport}
-              disabled={!reportData}
+              disabled={reportData.length === 0}
             >
               Export
             </Button.Ripple>

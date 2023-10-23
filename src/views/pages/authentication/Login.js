@@ -19,7 +19,8 @@ import {
   FormGroup,
   Input,
   Label,
-  Row
+  Row,
+  Spinner
 } from 'reactstrap'
 import { CallApiClient } from '../../../config'
 
@@ -49,6 +50,7 @@ const Login = props => {
   const [email, setEmail] = useState('admin@demo.com')
   const [password, setPassword] = useState('admin')
   const [error, setError] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const { register, errors, handleSubmit } = useForm()
   const illustration = skin === 'dark' ? 'login-v2-dark.svg' : 'login-v2.svg',
@@ -74,6 +76,7 @@ const Login = props => {
   // }
 
   const onSubmit = async data => {
+    setLoading(true)
     if (isObjEmpty(errors)) {
       await CallApiClient("api/login", data)
         .then(async res => {
@@ -89,10 +92,12 @@ const Login = props => {
           } else {
             setError(true)
           }
+          setLoading(false)
         })
         .catch(err => {
           console.log(err)
           setError(true)
+          setLoading(false)
         })
     }
   }
@@ -196,7 +201,7 @@ const Login = props => {
                   id='user_name'
                   name='user_name'
                   placeholder='Username'
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={e => { setEmail(e.target.value); setError(false) }}
                   // className={classnames({ 'is-invalid': errors['user_name'] })}
                   innerRef={register({ required: true, validate: value => value !== '' })}
                 />
@@ -215,7 +220,7 @@ const Login = props => {
                   id='password'
                   name='password'
                   className='input-group-merge'
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={e => { setPassword(e.target.value); setError(false) }}
                   className={classnames({ 'is-invalid': errors['password'] })}
                   innerRef={register({ required: true, validate: value => value !== '' })}
                 />
@@ -224,7 +229,15 @@ const Login = props => {
                 <CustomInput type='checkbox' className='custom-control-Primary' id='remember-me' label='Remember Me' />
               </FormGroup> */}
               <Button.Ripple type='submit' color='primary' block>
-                Sign in
+                {loading ? (
+                  <>
+                    <Spinner size="sm">
+                    </Spinner>
+                    <span>
+                      {' '}Sign in
+                    </span>
+                  </>) : "Sign in"
+                }
               </Button.Ripple>
             </Form>
             {error && (

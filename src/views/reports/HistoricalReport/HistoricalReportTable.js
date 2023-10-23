@@ -21,7 +21,7 @@ import ReportService from '../service'
 const HistoricalReportTable = () => {
   const location = useLocation()
   const [loading, setLoading] = useState(false)
-  const [reportData, setReportData] = useState()
+  const [reportData, setReportData] = useState([])
   const [headerData, setHeaderData] = useState()
   const [selectCheck, setSelectCheck] = useState([])
   const [columnsTable, setColumnTable] = useState()
@@ -71,7 +71,7 @@ const HistoricalReportTable = () => {
           setLoading(true)
           const date = new Date()
           const getDate = formatDate(date)
-          const worksheet = XLSX.utils.json_to_sheet(convertedList, {origin: 'A8'})
+          const worksheet = XLSX.utils.json_to_sheet(convertedList, { origin: 'A8' })
 
           const headerRow1 = ['PROFILE NAME: ', `${headerData.profile}`]
           const headerRow2 = ['TAG NAME:', `${headerData.tagName}`]
@@ -229,6 +229,7 @@ const HistoricalReportTable = () => {
               className='mr-2'
               color='primary'
               onClick={onExportReport}
+              disabled={reportData.length === 0}
             >
               Export
             </Button.Ripple>

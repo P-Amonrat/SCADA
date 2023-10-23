@@ -176,7 +176,6 @@ const ProfileManual = (props) => {
               <FormGroup>
                 <Row>
                   <Col sm='3'>
-                    <Label>GMDR Type</Label>
                     <div className='demo-inline-spacing'>
                       <CustomInput
                         type='radio'
@@ -191,7 +190,6 @@ const ProfileManual = (props) => {
                     </div>
                   </Col>
                   <Col sm='3'>
-                    <Label></Label>
                     <div className='demo-inline-spacing'>
                       <CustomInput
                         type='radio'
@@ -205,7 +203,6 @@ const ProfileManual = (props) => {
                     </div>
                   </Col>
                   <Col sm='3'>
-                    <Label></Label>
                     <div className='demo-inline-spacing'>
                       <CustomInput
                         type='radio'
@@ -219,7 +216,6 @@ const ProfileManual = (props) => {
                     </div>
                   </Col>
                   <Col sm='3'>
-                    <Label></Label>
                     {gmdrType === 1 ? (
                       <Select
                         theme={selectThemeColors}

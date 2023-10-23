@@ -21,7 +21,7 @@ import queryString from 'query-string'
 const HourlyReportTable = () => {
   const history = useHistory()
   const [loading, setLoading] = useState(false)
-  const [reportData, setReportData] = useState()
+  const [reportData, setReportData] = useState([])
   const [headerData, setHeaderData] = useState()
   const [selectCheck, setSelectCheck] = useState([])
   const [columnsTable, setColumnTable] = useState()
@@ -70,8 +70,8 @@ const HourlyReportTable = () => {
         try {
           const date = new Date()
           const getDate = formatDate(date)
-          
-          const worksheet = XLSX.utils.json_to_sheet(convertedList, {origin: 'A8'})
+
+          const worksheet = XLSX.utils.json_to_sheet(convertedList, { origin: 'A8' })
 
           const headerRow1 = ['REGION:', `${headerData.region.toUpperCase()}`]
           const headerRow2 = ['RTU NAME:', `${headerData.rtuName}`]
@@ -136,7 +136,7 @@ const HourlyReportTable = () => {
     }
   })
 
-  useEffect(async() => {
+  useEffect(async () => {
     try {
       setLoading(true)
       const data = queryString.parse(location.search)
@@ -209,7 +209,14 @@ const HourlyReportTable = () => {
       <Row >
         <Col sm={12}>
           <FormGroup className='d-flex mb-0 mt-2' style={{ justifyContent: 'end', alignItems: 'center' }}>
-            <Button.Ripple className='mr-2' color='primary' onClick={onExportReport}>Export</Button.Ripple>
+            <Button.Ripple
+              className='mr-2'
+              color='primary'
+              onClick={onExportReport}
+              disabled={reportData.length === 0}
+            >
+              Export
+            </Button.Ripple>
           </FormGroup>
         </Col>
       </Row>
@@ -223,7 +230,7 @@ const HourlyReportTable = () => {
               columns={colums}
               className='react-dataTable'
               sortIcon={<ChevronDown size={10} />}
-              // paginationRowsPerPageOptions={[10, 25, 50, 100]}
+            // paginationRowsPerPageOptions={[10, 25, 50, 100]}
             />
           </Spin>
         </Col>

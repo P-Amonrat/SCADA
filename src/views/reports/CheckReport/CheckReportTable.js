@@ -20,7 +20,7 @@ import ReportService from "../service"
 
 const CheckReportTable = () => {
   const [loading, setLoading] = useState(false)
-  const [reportData, setReportData] = useState()
+  const [reportData, setReportData] = useState([])
   const [columnsTable, setColumnTable] = useState()
   const [filterText, setFilterText] = useState("")
   const [resetPaginationToggle, setResetPaginationToggle] = useState(false)
@@ -96,17 +96,28 @@ const CheckReportTable = () => {
     try {
       setLoading(true)
       const data = queryString.parse(location.search)
+      const status = data.status
       if (data) {
         const req = {
           type: data.type,
           from_date: data.dateTime,
           from_hour: data.dateTime
         }
+
         //**Call api Get report List */
         const response = await ReportService.getCheckGmdrReport(req)
         if (response?.message === "ok") {
 
-          const checkStatus = response?.data?.table?.data.map((item) => ({
+          let filterStatus
+          if (status !== "Default") {
+            filterStatus = response?.data?.table?.data
+              .filter((item) => item.c3 === status)
+          } else {
+            filterStatus = response?.data?.table?.data
+              .map((item) => item)
+          }
+
+          const checkStatus = filterStatus.map((item) => ({
             c0: item.c0,
             c1: item.c1,
             c2: item.c2,
@@ -143,7 +154,7 @@ const CheckReportTable = () => {
               className='mr-2'
               color='primary'
               onClick={onExportReport}
-              disabled={!reportData}
+              disabled={reportData.length === 0}
             >
               Export
             </Button.Ripple>

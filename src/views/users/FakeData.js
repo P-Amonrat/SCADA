@@ -1,10 +1,16 @@
 export const LevelDropdown = [
   { value: 1, label: "GAS ADMIN" },
   { value: 2, label: "SCADA ADMIN" },
+  { value: 3, label: "GMDR ADMIN" },
+  { value: 4, label: "GAS USER" },
+  { value: 5, label: "SCADA USER" },
+  { value: 6, label: "GMDR USER" }
+]
+
+export const LevelOptions = [
+  { value: 1, label: "GAS ADMIN" },
+  { value: 2, label: "SCADA ADMIN" },
   { value: 3, label: "GMDR ADMIN" }
-  // { value: 4, label: "GAS USER" },
-  // { value: 5, label: "SCADA USER" },
-  // { value: 6, label: "GMDR USER" }
 ]
 
 export const userNameListMock = [
