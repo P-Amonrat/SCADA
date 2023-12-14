@@ -1,7 +1,7 @@
 // ** Auth Endpoints
 export default {
 
-  apiEndPoint: "http://119.63.71.114:9301/api", 
+  apiEndPoint: "http://10.161.1.3:8081", 
 
   // ** This will be prefixed in authorization header with token
   // ? e.g. Authorization: Bearer <token>
