@@ -78,7 +78,7 @@ const Login = props => {
   const onSubmit = async data => {
     setLoading(true)
     if (isObjEmpty(errors)) {
-      await CallApiClient("api/login", data)
+      await CallApiClient("login", data)
         .then(async res => {
           if (res.status === 200) {
             const data = { accessToken: res.data.token, refreshToken: res.data.token }
