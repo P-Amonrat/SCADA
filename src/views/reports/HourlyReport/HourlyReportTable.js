@@ -90,7 +90,7 @@ const HourlyReportTable = () => {
           const workbook = XLSX.utils.book_new()
           XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1')
 
-          await XLSX.writeFile(workbook, `PLHSSVR1N_View_Daily_GMDR_Report${getDate}.xlsx`)
+          await XLSX.writeFile(workbook, `PLHSSVR1N_View_Hourly_GMDR_Report${getDate}.xlsx`)
           await setLoading(false)
           await notifySuccess('Success!, Export report successfully')
         } catch (err) {

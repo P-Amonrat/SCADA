@@ -114,6 +114,16 @@ const VerticalForm = () => {
     }))
   }
 
+  const maxFormat = (fromDate) => {
+    if (fromDate) {
+      console.log(fromDate)
+      const updatedDate = new Date(fromDate)
+      updatedDate.setMonth(updatedDate.getMonth() + 1)
+      const formattedDate = updatedDate?.toISOString().split('T')[0]
+      return formattedDate
+    }
+  }
+
   return (
     <>
       <Card>
@@ -208,12 +218,12 @@ const VerticalForm = () => {
                 <FormGroup>
                   <Label>From</Label>
                   <Flatpickr
-                    data-enable-time
+                    // data-enable-time
                     id='date-time-picker'
                     className='form-control'
-                    defaultValue={moment(new Date()).startOf('day').format("YYYY-MM-DD HH:mm")}
+                    defaultValue={moment(new Date()).startOf('day').format("YYYY-MM-DD")}
                     options={{
-                      dateFormat: "Y-m-d H:i",
+                      dateFormat: "Y-m-d",
                       maxDate: "today"
                     }}
                     onChange={(value) => setFromDate(value[0])}
@@ -225,14 +235,17 @@ const VerticalForm = () => {
                 <FormGroup>
                   <Label>To</Label>
                   <Flatpickr
-                    data-enable-time
+                    // data-enable-time
                     id='date-time-picker'
                     className='form-control'
-                    defaultValue={moment(new Date()).endOf('day').format("YYYY-MM-DD HH:mm")}
+                    defaultValue={moment(new Date()).endOf('day').format("YYYY-MM-DD")}
                     options={{
-                      dateFormat: "Y-m-d H:i",
-                      minDate: moment(new Date(fromDate)).format("YYYY-MM-DD HH:mm"),
-                      maxDate: moment(new Date(fromDate)).add(1, 'months').format("YYYY-MM-DD HH:mm")
+                      dateFormat: "Y-m-d",
+                      // minDate: moment(new Date(fromDate)).format("YYYY-MM-DD"),
+                      // maxDate: moment(new Date(fromDate)).add(1, 'months').format("YYYY-MM-DD")
+                      minDate: new Date(fromDate),
+                      maxDate: new Date(fromDate).setMonth(new Date(fromDate).getMonth() + 1)
+                      // maxDate: maxFormat(fromDate)
                     }}
                     onChange={(value) => setToDate(value[0])}
                   />
