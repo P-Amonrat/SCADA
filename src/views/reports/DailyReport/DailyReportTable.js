@@ -127,7 +127,8 @@ const DailyReportTable = () => {
         ),
         selector: item.selector,
         sorttable: item.sorttable,
-        maxWidth: item.maxWidth
+        maxWidth: item.maxWidth,
+        minWidth: "150px"
       }
     } else {
       return {
@@ -140,7 +141,8 @@ const DailyReportTable = () => {
         ),
         selector: item.selector,
         sorttable: item.sorttable,
-        maxWidth: item.maxWidth
+        maxWidth: item.maxWidth,
+        minWidth: "180px"
       }
     }
   })

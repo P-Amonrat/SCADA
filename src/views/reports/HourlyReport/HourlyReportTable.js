@@ -129,10 +129,23 @@ const HourlyReportTable = () => {
         ),
         selector: item.selector,
         sorttable: item.sorttable,
-        maxWidth: item.maxWidth
+        maxWidth: item.maxWidth,
+        minWidth: "150px"
       }
     } else {
-      return item
+      return {
+        name: (
+          <>
+            <div style={{ fontSize: "14px" }}>
+              {item.name}
+            </div>
+          </>
+        ),
+        selector: item.selector,
+        sorttable: item.sorttable,
+        maxWidth: item.maxWidth,
+        minWidth: "180px"
+      }
     }
   })
 

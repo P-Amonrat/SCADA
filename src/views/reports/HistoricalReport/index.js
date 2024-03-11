@@ -29,7 +29,9 @@ const initialState = {
   profileName: "",
   type: TypeOptions[0],
   compareAllType: false,
-  achiveType: achiveOptions[0]
+  achiveType: achiveOptions[0],
+  fromDate: moment(new Date()).startOf('day').format("YYYY-MM-DD HH:mm"),
+  toDate: moment(new Date()).endOf('day').format("YYYY-MM-DD HH:mm")
 }
 
 const VerticalForm = () => {
@@ -39,8 +41,8 @@ const VerticalForm = () => {
   const [loading, setLoading] = useState(false)
   const [isOpenModal, setIsOpenModal] = useState(false)
   const [addedProfile, setAddedProfile] = useState([])
-  const [fromDate, setFromDate] = useState()
-  const [toDate, setToDate] = useState()
+  const [fromDate, setFromDate] = useState(moment(new Date()).startOf('day').format("YYYY-MM-DD HH:mm"))
+  const [toDate, setToDate] = useState(moment(new Date()).endOf('day').format("YYYY-MM-DD HH:mm"))
 
   const fetchData = async () => {
     try {
@@ -71,8 +73,8 @@ const VerticalForm = () => {
         type: reqData.type.value,
         compareAllType: reqData.compareAllType,
         achiveType: reqData.achiveType.value,
-        from: moment(fromDate).format("YYYY/MM/DD HH:mm"),
-        to: moment(toDate).format("YYYY/MM/DD HH:mm")
+        from: moment(reqData.fromDate).format("YYYY/MM/DD HH:mm"),
+        to: moment(reqData.toDate).format("YYYY/MM/DD HH:mm")
       }
 
       const queryParams = new URLSearchParams(req).toString()
@@ -88,6 +90,8 @@ const VerticalForm = () => {
   const onResetData = () => {
     setReqData(initialState)
     setAddedProfile([])
+    // setFromDate(moment(new Date()).startOf('day').format("YYYY-MM-DD HH:mm"))
+    // setToDate(moment(new Date()).endOf('day').format("YYYY-MM-DD HH:mm"))
   }
 
   const onChangeProfileName = async (value) => {
@@ -220,12 +224,13 @@ const VerticalForm = () => {
                       data-enable-time
                       id='fromDateTimePicker'
                       className='form-control'
-                      defaultValue={moment(new Date()).startOf('day').format("YYYY-MM-DD HH:mm")}
+                      defaultValue={reqData.fromDate}
+                      value={reqData.fromDate}
                       options={{
                         dateFormat: "Y-m-d H:i",
                         maxDate: "today"
                       }}
-                      onChange={(value) => setFromDate(value[0])}
+                      onChange={(value) => setReqData({ ...reqData, fromDate: value[0] })}
                     />
                   </FormGroup>
                 </Col>
@@ -237,13 +242,14 @@ const VerticalForm = () => {
                       data-enable-time
                       id='toDateTimePicker'
                       className='form-control'
-                      defaultValue={moment(new Date()).endOf('day').format("YYYY-MM-DD HH:mm")}
+                      defaultValue={reqData.toDate}
+                      value={reqData.toDate}
                       options={{
                         dateFormat: "Y-m-d H:i",
-                        minDate: moment(new Date(fromDate)).format("YYYY-MM-DD HH:mm"),
-                        maxDate: moment(new Date(fromDate)).add(1, 'months').format("YYYY-MM-DD HH:mm")
+                        minDate: moment(new Date(reqData.fromDate)).format("YYYY-MM-DD HH:mm"),
+                        maxDate: moment(new Date(reqData.fromDate)).add(1, 'months').format("YYYY-MM-DD HH:mm")
                       }}
-                      onChange={(value) => setToDate(value[0])}
+                      onChange={(value) => setReqData({ ...reqData, toDate: value[0] })}
                     />
                   </FormGroup>
                 </Col>
